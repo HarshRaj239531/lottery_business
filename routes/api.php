@@ -124,5 +124,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/notifications/sms', [NotificationController::class, 'sendSMS']);
         Route::post('/notifications/whatsapp', [NotificationController::class, 'sendWhatsApp']);
 
+        // 👮 KYC Verification
+        Route::post('/kyc/submit', [\App\Http\Controllers\Admin\KycController::class, 'submit']);
+
     });
 });

@@ -31,11 +31,17 @@ class MemberController extends Controller
     public function store(MemberRequest $request)
     {
         $member = User::create($request->validated());
-        $member->assignRole('member');
+        
+        $role = $request->input('role', 'member');
+        if ($role === 'agent') {
+            $member->assignRole('agent');
+        } else {
+            $member->assignRole('member');
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Member Created',
+            'message' => $role === 'agent' ? 'Agent Registered' : 'Member Created',
             'data' => $member
         ]);
     }
