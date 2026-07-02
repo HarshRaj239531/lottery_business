@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+
+#[Fillable(['name', 'email', 'password', 'phone', 'address', 'id_proof', 'photo', 'aadhar_card', 'pan_card', 'otp', 'otp_expires_at', 'is_phone_verified', 'bank_name', 'bank_account_number', 'bank_ifsc', 'bank_account_type'])]
+#[Hidden(['password', 'remember_token'])]
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function committees()
+    {
+        return $this->belongsToMany(Committee::class, 'committee_user')
+            ->withPivot('joined_at', 'status')
+            ->withTimestamps();
+    }
+
+    public function installments()
+    {
+        return $this->hasMany(Installment::class);
+    }
+
+    public function lotteries()
+    {
+        return $this->hasMany(Lottery::class, 'winner_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function loans()
+    {
+        return $this->hasMany(Loan::class);
+    }
+}
