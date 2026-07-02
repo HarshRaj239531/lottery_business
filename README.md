@@ -1,58 +1,133 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# FinAdmin - Premium Janta Community Admin Panel & Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel Framework](https://img.shields.io/badge/Framework-Laravel%2010-red.svg)](https://laravel.com)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-## About Laravel
+**FinAdmin** is a premium, high-fidelity administrative panel and backend registry designed for the **Janta Community & Trader App**. It serves as the core system managing platform members, field agent collections, targets, compliance validation, and kitty/lottery ledgers.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The frontend is aligned with Figma design systems and includes a custom **Dark Mode Toggle** (inspired by Dawadukkan theme structures) and a **Sidebar Minimize Option** with persistent settings and dynamic tooltips.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🌟 Key Features
 
-## Learning Laravel
+### 1. Executive Dashboard (Overview)
+- **Welcome Hero Banner**: Welcomes the admin by name and displays real-time calendar dates.
+- **KPI Metrics**: Cards displaying Total disbursements, Active Members, Total Collections, and KYC Compliance rates with trend directions.
+- **Monthly Collection Curves**: Smooth cubic-bezier line charts (`Chart.js`) with linear fading gradients.
+- **Quick Access Tiles**: Responsive navigation buttons with slide-on-hover arrow guides.
+- **Recent Activities & Log**: Real-time updates with visual indicators.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Member & User Directory
+- **Community Sorting**: Filter members by community clusters or active/pending statuses.
+- **Identity Details**: Lists all user contacts, account numbers, and cumulative deposit valuations.
+- **Agent Roles**: Assign or demote users to agent status dynamically.
+- **Impersonation Mode**: Secure route token generation allowing admins to view the app shell from a member's account.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. Field Agents Management
+- **Target Tracking**: Set targets based on collection values (₹) or transaction counts.
+- **Performance Logs**: Visual progress bars representing target completion ratios.
+- **Region Management**: Map agents to specific urban centers or rural clusters.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 4. KYC Compliance & Safety Center
+- **Document Submissions**: Direct upload slots for identification documents (Aadhar, PAN, Voter ID, Passport).
+- **OCR Checks & Checklist**: Validation checklists tracking upload statuses.
+- **Biometric Face-Match**: Simulated camera feed preview for face-matching compliance checks.
 
-## Agentic Development
+### 5. Collections Registry
+- **Real-Time Feed**: Track agent collections immediately with voucher logs.
+- **Approval System**: One-click approvals or rejections of field collection vouchers.
+- **Interactive Metrics**: Collections method charts showing digital vs cash payment ratios.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 6. Accounting & Ops Core
+- **Committees (Kitty Systems)**: Manage active lotteries, limit sizes, and monthly payment frequencies.
+- **Lotteries Winner Selector**: Built-in lottery drawing algorithm to pick winners from active deposits.
+- **Payouts Dashboard**: Manage cash bank transfers to lottery winners.
+- **Financial Statements**: Dynamic generation of **Profit & Loss** statements and **Balance Sheet** ledgers.
+- **General Ledgers**: Inspect individual Member and Committee ledger accounts.
 
+---
+
+## 🛠️ Technology Stack
+
+- **Backend**: Laravel 10 (PHP 8.2), Eloquent ORM.
+- **Frontend**: Blade Templates, Vanilla CSS, Vanilla JS, Chart.js, jQuery, DataTables.
+- **Environment**: Docker Containers using Laravel Sail.
+- **Database**: MySQL.
+
+---
+
+## 🚀 Installation & Local Setup
+
+The project is fully containerized using **Laravel Sail** (Docker Compose). Follow these steps to set up the development environment locally:
+
+### 1. Clone the Repository
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/your-username/lottery_business.git
+cd lottery_business
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Configure Environment variables
+Copy the environment template:
+```bash
+cp .env.example .env
+```
+Ensure database credentials inside `.env` align with your local settings (default Sail database is `laravel` with username `sail`).
 
-## Contributing
+### 3. Start Docker Containers (Laravel Sail)
+Spin up the local containerized stack:
+```bash
+./vendor/bin/sail up -d
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Install Project Dependencies
+Run composer to install PHP packages:
+```bash
+./vendor/bin/sail composer install
+```
 
-## Code of Conduct
+### 5. Generate Application Key
+```bash
+./vendor/bin/sail artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 6. Run Migrations & Seeders
+Configure tables and seed initial mock accounts (admin credentials, members, agents, and accounting entries):
+```bash
+./vendor/bin/sail artisan migrate:fresh --seed
+```
 
-## Security Vulnerabilities
+### 7. Access the Application
+Open your browser and navigate to:
+```
+http://localhost
+```
+Use the seeded credentials to log in:
+- **Email**: `admin@example.com`
+- **Password**: `password`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 📂 Project Folder Structure
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `app/`
+  - `Http/Controllers/Admin/` - Contains Controllers for Members, Agents, KYC uploads, and Accounting.
+  - `Models/` - Database schemas for Committees, Loans, Installments, KYC, and Transactions.
+  - `Services/` - Financial aggregators and business logic classes (e.g., `DashboardService`).
+- `database/`
+  - `migrations/` - Database tables definitions.
+  - `seeders/` - Database mocks setup.
+- `public/`
+  - `css/admin.css` - Custom theme rules, including dark mode and minimized sidebar states.
+  - `js/admin.js` - Routing, Chart.js templates, modals, and API transaction scripts.
+- `resources/views/admin/`
+  - `dashboard.blade.php` - Main app view wrapper (includes topbar and sidebar).
+  - `pages/` - Individual page panels: `dashboard`, `members`, `agents`, `kyc`, `collections`.
+- `routes/api.php` - Secure backend API routes.
+
+---
+
+## 🛡️ License
+
+This project is open-sourced software licensed under the [MIT license](LICENSE).
