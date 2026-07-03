@@ -151,6 +151,21 @@
         </div>
     </div>
 
-    <script src="/js/admin.js?v={{ time() }}"></script>
+    <script src="/js/admin/core.js?v={{ time() }}"></script>
+    <script src="/js/admin/ui.js?v={{ time() }}"></script>
+    <script src="/js/admin/forms.js?v={{ time() }}"></script>
+    <script src="/js/admin/dashboard.js?v={{ time() }}"></script>
+    <script src="/js/admin/accounting.js?v={{ time() }}"></script>
+    <script src="/js/admin/committees.js?v={{ time() }}"></script>
+    <script src="/js/admin/members.js?v={{ time() }}"></script>
+    <script src="/js/admin/installments.js?v={{ time() }}"></script>
+    <script src="/js/admin/loans.js?v={{ time() }}"></script>
+    <script src="/js/admin/lotteries_payouts.js?v={{ time() }}"></script>
+    <script src="/js/admin/collections.js?v={{ time() }}"></script>
+    <script src="/js/admin/charts.js?v={{ time() }}"></script>
+    <script src="/js/admin/balance_sheet_extra.js?v={{ time() }}"></script>
+    <script src="/js/admin/agents.js?v={{ time() }}"></script>
+    <script src="/js/admin/kyc_overview.js?v={{ time() }}"></script>
+    <script src="/js/admin/init.js?v={{ time() }}"></script>
 </body>
 </html>
