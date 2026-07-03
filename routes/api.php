@@ -51,6 +51,43 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 });
 
+// 🧑 User Specific API Routes
+Route::prefix('user')->group(function () {
+    Route::post('/login', [\App\Http\Controllers\User\AuthController::class, 'login']);
+
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\User\DashboardController::class, 'index']);
+        Route::post('/logout', [\App\Http\Controllers\User\AuthController::class, 'logout']);
+
+        // 👤 Profile & Vault
+        Route::get('/profile', [\App\Http\Controllers\User\ProfileController::class, 'index']);
+        Route::post('/profile/update', [\App\Http\Controllers\User\ProfileController::class, 'update']);
+        Route::get('/vault', [\App\Http\Controllers\User\ProfileController::class, 'vault']);
+        Route::post('/vault/upload', [\App\Http\Controllers\User\ProfileController::class, 'uploadVault']);
+
+        // 🏢 Committees
+        Route::get('/committees', [\App\Http\Controllers\User\CommitteeController::class, 'index']);
+        Route::get('/committees/{id}', [\App\Http\Controllers\User\CommitteeController::class, 'show']);
+        Route::post('/committees/{id}/join', [\App\Http\Controllers\User\CommitteeController::class, 'join']);
+        Route::get('/my-committees', [\App\Http\Controllers\User\CommitteeController::class, 'myCommittees']);
+
+        // 💳 Loans
+        Route::get('/loans', [\App\Http\Controllers\User\LoanController::class, 'index']);
+        Route::get('/loans/{id}', [\App\Http\Controllers\User\LoanController::class, 'show']);
+
+        // 💰 Installments
+        Route::get('/installments/pending', [\App\Http\Controllers\User\InstallmentController::class, 'pending']);
+        Route::get('/installments/paid', [\App\Http\Controllers\User\InstallmentController::class, 'paid']);
+
+        // 🏆 Lottery
+        Route::get('/lotteries/winners', [\App\Http\Controllers\User\LotteryController::class, 'winners']);
+        Route::get('/lotteries/history', [\App\Http\Controllers\User\LotteryController::class, 'history']);
+
+        // 💸 Payments
+        Route::post('/payments/pay', [\App\Http\Controllers\User\PaymentController::class, 'pay']);
+    });
+});
+
 Route::prefix('admin')->group(function () {
     // 🔒 Protected Admin Routes
     Route::middleware(['auth:sanctum', 'role:Super Admin'])->group(function () {
