@@ -136,25 +136,25 @@ class InstallmentController extends Controller
     // ⚠️ Send Due Warnings
     public function sendWarnings(NotificationService $notify)
     {
-        $installments = Installment::with('user')
-            ->where('status', 'pending')
-            ->where('due_date', '<', now())
-            ->get();
-
         $count = 0;
 
-        foreach ($installments as $installment) {
-            if ($installment->user) {
-                try {
-                    $notify->sendNotification(
-                        $installment->user,
-                        "Payment Overdue",
-                        "₹{$installment->amount} overdue"
-                    );
-                    $count++;
-                } catch (\Exception $e) {}
-            }
-        }
+        Installment::with('user')
+            ->where('status', 'pending')
+            ->where('due_date', '<', now())
+            ->chunk(100, function ($installments) use ($notify, &$count) {
+                foreach ($installments as $installment) {
+                    if ($installment->user) {
+                        try {
+                            $notify->sendNotification(
+                                $installment->user,
+                                "Payment Overdue",
+                                "₹{$installment->amount} overdue"
+                            );
+                            $count++;
+                        } catch (\Exception $e) {}
+                    }
+                }
+            });
 
         return response()->json([
             'status' => true,
@@ -165,25 +165,25 @@ class InstallmentController extends Controller
     // ⏰ Reminders
     public function sendPaymentReminders(NotificationService $notify)
     {
-        $installments = Installment::with('user')
-            ->where('status', 'pending')
-            ->whereBetween('due_date', [now(), now()->addDays(3)])
-            ->get();
-
         $count = 0;
 
-        foreach ($installments as $installment) {
-            if ($installment->user) {
-                try {
-                    $notify->sendNotification(
-                        $installment->user,
-                        "Reminder",
-                        "₹{$installment->amount} due soon"
-                    );
-                    $count++;
-                } catch (\Exception $e) {}
-            }
-        }
+        Installment::with('user')
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), now()->addDays(3)])
+            ->chunk(100, function ($installments) use ($notify, &$count) {
+                foreach ($installments as $installment) {
+                    if ($installment->user) {
+                        try {
+                            $notify->sendNotification(
+                                $installment->user,
+                                "Reminder",
+                                "₹{$installment->amount} due soon"
+                            );
+                            $count++;
+                        } catch (\Exception $e) {}
+                    }
+                }
+            });
 
         return response()->json([
             'status' => true,
@@ -196,8 +196,7 @@ class InstallmentController extends Controller
     {
         return Installment::with(['user', 'committee'])
             ->latest()
-            ->take(200)
-            ->get();
+            ->paginate(20);
     }
 
     // 👁️ Show

@@ -22,7 +22,7 @@ class PayoutController extends Controller
     public function index()
     {
         try {
-            $payouts = Payout::with(['user', 'committee'])->latest()->get();
+            $payouts = Payout::with(['user', 'committee'])->latest()->paginate(15);
 
             return ApiResponse::success($payouts, 'Payout list fetched');
 

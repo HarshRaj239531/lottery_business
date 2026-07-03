@@ -61,7 +61,7 @@ class AgentController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $query->latest()->get()
+            'data'   => $query->latest()->paginate(15)
         ]);
     }
 
@@ -83,7 +83,7 @@ class AgentController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $query->latest()->get()
+            'data'   => $query->latest()->paginate(15)
         ]);
     }
 

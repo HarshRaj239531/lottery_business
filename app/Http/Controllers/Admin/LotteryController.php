@@ -30,7 +30,7 @@ class LotteryController extends Controller
     // 📋 All Draws
     public function index()
     {
-        return response()->json(Lottery::with(['committee', 'winner'])->get());
+        return response()->json(Lottery::with(['committee', 'winner'])->paginate(15));
     }
 
     // 👁️ Show Draw

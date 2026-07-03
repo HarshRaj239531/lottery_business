@@ -14,7 +14,7 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::with('roles')->latest()->get();
+            $users = User::with('roles')->latest()->paginate(15);
             return ApiResponse::success($users, 'User list fetched');
         } catch (\Exception $e) {
             return ApiResponse::error($e->getMessage());
