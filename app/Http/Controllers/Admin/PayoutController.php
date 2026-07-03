@@ -4,41 +4,73 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use App\Models\Payout;
 use App\Services\NotificationService;
+use App\Helpers\ApiResponse;
+use Illuminate\Support\Facades\DB;
 
 class PayoutController extends Controller
 {
-    public function index()
+    protected $notify;
+
+    public function __construct(NotificationService $notify)
     {
-        return response()->json(Payout::with(['user', 'committee'])->get());
+        $this->notify = $notify;
     }
 
-    public function pay($id, NotificationService $notify)
+    // 📋 List all payouts
+    public function index()
     {
-        $payout = Payout::with('user', 'committee')->findOrFail($id);
+        try {
+            $payouts = Payout::with(['user', 'committee'])->latest()->get();
 
-        if ($payout->status === 'paid') {
-            return response()->json(['status' => false, 'message' => 'Already paid.'], 400);
+            return ApiResponse::success($payouts, 'Payout list fetched');
+
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
         }
+    }
 
-        $payout->update([
-            'status' => 'paid',
-            'paid_date' => now()->format('Y-m-d')
-        ]);
+    // 💰 Mark payout as paid
+    public function pay($id)
+    {
+        DB::beginTransaction();
 
-        if ($payout->user) {
-            $notify->sendNotification(
-                $payout->user, 
-                "Payout Transferred", 
-                "Great news! Your total payout of ₹{$payout->total_payout} from the {$payout->committee->name} committee has been successfully transferred to your bank account."
-            );
+        try {
+            $payout = Payout::with(['user', 'committee'])->findOrFail($id);
+
+            // ❌ Already paid
+            if ($payout->status === 'paid') {
+                return ApiResponse::error('Already paid', 400);
+            }
+
+            // ❌ Optional: other states check
+            if ($payout->status === 'cancelled') {
+                return ApiResponse::error('Payout is cancelled', 400);
+            }
+
+            // ✅ Update payout
+            $payout->update([
+                'status' => 'paid',
+                'paid_date' => now()
+            ]);
+
+            // 📲 Notify user
+            if ($payout->user) {
+                $this->notify->sendNotification(
+                    $payout->user,
+                    "Payout Transferred",
+                    "Great news! Your payout of ₹{$payout->total_payout} from {$payout->committee->name} has been transferred."
+                );
+            }
+
+            DB::commit();
+
+            return ApiResponse::success(null, 'Payout marked as paid & user notified');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ApiResponse::error($e->getMessage());
         }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Payout marked as paid and user notified!'
-        ]);
     }
 }

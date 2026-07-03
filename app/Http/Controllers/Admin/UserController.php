@@ -10,99 +10,105 @@ use App\Helpers\ApiResponse;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the users.
-     */
+    // 📋 Get All Users
     public function index()
     {
         try {
-            $users = User::all();
+            $users = User::with('roles')->latest()->get();
             return ApiResponse::success($users, 'User list fetched');
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
+        }
+    }
+
+    // ➕ Create User
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email',
+                'password' => 'required|string|min:8',
+                'role' => 'nullable|string|exists:roles,name'
+            ]);
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+
+            if ($request->filled('role')) {
+                $user->assignRole($request->role);
+            }
+
+            $user->load('roles');
+
+            return ApiResponse::success($user, 'User created successfully');
 
         } catch (\Exception $e) {
             return ApiResponse::error($e->getMessage());
         }
     }
 
-    /**
-     * Store a newly created user in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role' => 'nullable|string|exists:roles,name'
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        if ($request->has('role')) {
-            $user->assignRole($request->role);
-        }
-
-        // reload user with roles
-        $user->load('roles');
-
-        return ApiResponse::success($user, 'User created successfully');
-    }
-
-    /**
-     * Display the specified user.
-     */
+    // 🔍 Show Single User
     public function show(User $user)
     {
-        $user->load('roles');
-        return ApiResponse::success($user, 'User retrieved successfully');
+        try {
+            $user->load('roles');
+            return ApiResponse::success($user, 'User retrieved successfully');
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
+        }
     }
 
-    /**
-     * Update the specified user in storage.
-     */
+    // ✏️ Update User
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8',
-            'role' => 'nullable|string|exists:roles,name'
-        ]);
+        try {
+            $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+                'password' => 'nullable|string|min:8',
+                'role' => 'nullable|string|exists:roles,name'
+            ]);
 
-        if ($request->has('name')) {
-            $user->name = $request->name;
+            $user->update([
+                'name' => $request->name ?? $user->name,
+                'email' => $request->email ?? $user->email,
+                'password' => $request->filled('password') 
+                    ? Hash::make($request->password) 
+                    : $user->password,
+            ]);
+
+            if ($request->filled('role')) {
+                $user->syncRoles([$request->role]);
+            }
+
+            $user->load('roles');
+
+            return ApiResponse::success($user, 'User updated successfully');
+
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
         }
-
-        if ($request->has('email')) {
-            $user->email = $request->email;
-        }
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->save();
-
-        if ($request->has('role')) {
-            $user->syncRoles([$request->role]);
-        }
-
-        $user->load('roles');
-
-        return ApiResponse::success($user, 'User updated successfully');
     }
 
-    /**
-     * Remove the specified user from storage.
-     */
+    // ❌ Delete User
     public function destroy(User $user)
     {
-        $user->delete();
+        try {
+            // prevent deleting self (optional safety)
+            if (auth()->id() === $user->id) {
+                return ApiResponse::error('You cannot delete yourself');
+            }
 
-        return ApiResponse::success(null, 'User deleted successfully');
+            $user->delete();
+
+            return ApiResponse::success(null, 'User deleted successfully');
+
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
+        }
     }
 }

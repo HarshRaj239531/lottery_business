@@ -4,30 +4,39 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use App\Helpers\ApiResponse;
 
 class AuthController extends Controller
 {
+    /**
+     * ADMIN LOGIN (SECURE)
+     */
     public function login(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|string|min:6',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return ApiResponse::error('Invalid email or password', 401);
+        // Find user
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return ApiResponse::error('Invalid credentials', 401);
         }
 
-        $user = Auth::user();
-
-        // Check if user is an admin
-        if (!$user->hasRole('Super Admin')) {
-            return ApiResponse::error('Unauthorized access. Admin only.', 403);
+        // Role check (safe way)
+        if ($user->role !== 'admin') {
+            return ApiResponse::error('Unauthorized. Admin only.', 403);
         }
 
+        // Delete old tokens (important security step)
+        $user->tokens()->delete();
+
+        // Create new token
         $token = $user->createToken('admin_token')->plainTextToken;
 
         return ApiResponse::success([
@@ -36,9 +45,21 @@ class AuthController extends Controller
         ], 'Login successful');
     }
 
+    /**
+     * LOGOUT
+     */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        if (!$user) {
+            return ApiResponse::error('User not authenticated', 401);
+        }
+
+        // Delete current token safely
+        if ($user->currentAccessToken()) {
+            $user->currentAccessToken()->delete();
+        }
 
         return ApiResponse::success([], 'Logged out successfully');
     }

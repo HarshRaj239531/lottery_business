@@ -4,165 +4,250 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Http\Requests\MemberRequest;
 use App\Models\Committee;
 use App\Models\Installment;
+use App\Http\Requests\MemberRequest;
 use App\Helpers\ApiResponse;
-
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Yajra\DataTables\Facades\DataTables;
 
 class MemberController extends Controller
 {
-    // 📋 Get All Members and Agents
+    /*
+    |--------------------------------------------------------------------------
+    | 📋 LIST MEMBERS
+    |--------------------------------------------------------------------------
+    */
     public function index(Request $request)
     {
-        $query = User::role(['member', 'agent'])->with(['roles', 'loans'])->withCount(['committees', 'loans']);
-        
+        $query = User::role(['member', 'agent'])
+            ->with(['roles', 'loans'])
+            ->withCount(['committees', 'loans']);
+
         if ($request->ajax() || $request->has('draw')) {
             return DataTables::of($query)->make(true);
         }
 
-        // Fallback for API clients that just want the raw list
-        return response()->json($query->paginate(50));
+        return ApiResponse::success(
+            $query->paginate(50),
+            'Members fetched successfully'
+        );
     }
 
-    // ➕ Create Member
+
+    /*
+    |--------------------------------------------------------------------------
+    | ➕ CREATE MEMBER / AGENT
+    |--------------------------------------------------------------------------
+    */
     public function store(MemberRequest $request)
     {
-        $member = User::create($request->validated());
-        
-        $role = $request->input('role', 'member');
-        if ($role === 'agent') {
-            $member->assignRole('agent');
-        } else {
-            $member->assignRole('member');
-        }
+        $this->authorize('create', User::class);
 
-        return response()->json([
-            'status' => true,
-            'message' => $role === 'agent' ? 'Agent Registered' : 'Member Created',
-            'data' => $member
-        ]);
+        $member = User::create($request->validated());
+
+        $role = $request->input('role', 'member');
+        $member->assignRole($role === 'agent' ? 'agent' : 'member');
+
+        return ApiResponse::success(
+            $member,
+            'User created successfully'
+        );
     }
 
-    // 👁️ Show Member
+
+    /*
+    |--------------------------------------------------------------------------
+    | 👁️ SHOW MEMBER
+    |--------------------------------------------------------------------------
+    */
     public function show($id)
     {
-        return response()->json(User::findOrFail($id));
+        $this->authorize('view', User::class);
+
+        $user = User::findOrFail($id);
+
+        return ApiResponse::success(
+            $user,
+            'User details fetched'
+        );
     }
 
-    // ✏️ Update Member
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✏️ UPDATE MEMBER
+    |--------------------------------------------------------------------------
+    */
     public function update(MemberRequest $request, $id)
     {
+        $this->authorize('update', User::class);
+
         $member = User::findOrFail($id);
         $member->update($request->validated());
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Member Updated'
-        ]);
+        return ApiResponse::success(
+            null,
+            'Member updated successfully'
+        );
     }
 
-    // ❌ Delete Member
+
+    /*
+    |--------------------------------------------------------------------------
+    | ❌ DELETE MEMBER
+    |--------------------------------------------------------------------------
+    */
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
+        $this->authorize('delete', User::class);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Member Deleted'
-        ]);
+        $member = User::findOrFail($id);
+        $member->delete();
+
+        return ApiResponse::success(
+            null,
+            'Member deleted successfully'
+        );
     }
 
-    // 🎓 Enroll Member in Committee
-    public function enroll(\Illuminate\Http\Request $request, $id, \App\Services\NotificationService $notify)
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🎓 ENROLL MEMBER IN COMMITTEE
+    |--------------------------------------------------------------------------
+    */
+    public function enroll(Request $request, $id, \App\Services\NotificationService $notify)
     {
+        $this->authorize('update', User::class);
+
         $request->validate([
             'committee_id' => 'required|exists:committees,id'
         ]);
 
-        $user = User::findOrFail($id);
-        $committee = \App\Models\Committee::findOrFail($request->committee_id);
+        return DB::transaction(function () use ($request, $id, $notify) {
 
-        if (!$user->hasRole('member')) {
-            return response()->json(['status' => false, 'message' => 'Only members can be enrolled'], 400);
-        }
+            $user = User::findOrFail($id);
+            $committee = Committee::findOrFail($request->committee_id);
 
-        if ($committee->status !== 'active') {
-            return response()->json(['status' => false, 'message' => 'Committee is not active.'], 400);
-        }
-
-        if ($committee->members()->where('user_id', $user->id)->exists()) {
-            return response()->json(['status' => false, 'message' => 'User is already enrolled in this committee.'], 400);
-        }
-
-        $committee->members()->syncWithoutDetaching([$user->id]);
-
-        $startDate = now();
-        $endDate = now()->addMonths($committee->duration);
-        
-        $i = 0;
-        while (true) {
-            $dueDate = $startDate->copy();
-            if ($committee->payment_frequency === 'daily') $dueDate->addDays($i);
-            elseif ($committee->payment_frequency === 'weekly') $dueDate->addWeeks($i);
-            else $dueDate->addMonths($i);
-
-            if ($dueDate->gte($endDate)) {
-                break;
+            // ❌ Only member allowed
+            if (!$user->hasRole('member')) {
+                return ApiResponse::error('Only members can be enrolled');
             }
 
-            \App\Models\Installment::firstOrCreate([
-                'user_id' => $user->id,
-                'committee_id' => $committee->id,
-                'due_date' => $dueDate->format('Y-m-d'),
-            ], [
-                'amount' => $committee->amount,
-                'status' => 'pending',
-            ]);
-            $i++;
-        }
+            // ❌ Committee must be active
+            if ($committee->status !== 'active') {
+                return ApiResponse::error('Committee is not active');
+            }
 
-        $notify->sendNotification($user, "Committee Joined", "You have been enrolled in the {$committee->name} committee by an Admin.");
+            // ❌ Already enrolled check
+            if ($committee->members()->where('user_id', $user->id)->exists()) {
+                return ApiResponse::error('User already enrolled');
+            }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Member enrolled successfully'
-        ]);
+            // ✅ Attach member
+            $committee->members()->syncWithoutDetaching([$user->id]);
+
+            // 📅 Generate Installments
+            $startDate = now();
+            $endDate   = now()->addMonths($committee->duration);
+
+            for ($i = 0; $i < 1000; $i++) {
+                $dueDate = $startDate->copy();
+
+                if ($committee->payment_frequency === 'daily') {
+                    $dueDate->addDays($i);
+                } elseif ($committee->payment_frequency === 'weekly') {
+                    $dueDate->addWeeks($i);
+                } else {
+                    $dueDate->addMonths($i);
+                }
+
+                if ($dueDate->gte($endDate)) {
+                    break;
+                }
+
+                Installment::firstOrCreate(
+                    [
+                        'user_id'       => $user->id,
+                        'committee_id'  => $committee->id,
+                        'due_date'      => $dueDate->format('Y-m-d'),
+                    ],
+                    [
+                        'amount' => $committee->amount,
+                        'status' => 'pending',
+                    ]
+                );
+            }
+
+            // 🔔 Send Notification
+            $notify->sendNotification(
+                $user,
+                "Committee Joined",
+                "You have been enrolled in {$committee->name}"
+            );
+
+            return ApiResponse::success(
+                null,
+                'Member enrolled successfully'
+            );
+        });
     }
 
-    // 👤 Impersonate Member
+
+    /*
+    |--------------------------------------------------------------------------
+    | 👤 IMPERSONATE USER (SECURE)
+    |--------------------------------------------------------------------------
+    */
     public function impersonate($id)
     {
+        $this->authorize('loginAsUser', User::class);
+
         $user = User::findOrFail($id);
-        
-        // Generate a token for the user to login as them
-        $token = $user->createToken('admin_impersonation')->plainTextToken;
-        
+
+        // 🔒 Remove old tokens
+        $user->tokens()->delete();
+
+        // 🔑 Create short-lived token (30 min)
+        $token = $user->createToken(
+            'impersonation',
+            ['*'],
+            now()->addMinutes(30)
+        )->plainTextToken;
+
         return ApiResponse::success([
-            'token' => $token,
-            'user' => $user,
-            'redirect_url' => '/member/dashboard' // frontend will use this to navigate
-        ], 'Impersonation successful.');
+            'token'        => $token,
+            'user'         => $user,
+            'redirect_url' => '/member/dashboard'
+        ], 'Impersonation successful (30 min)');
     }
 
-    // 🔑 Change Member Password
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🔑 CHANGE PASSWORD
+    |--------------------------------------------------------------------------
+    */
     public function changePassword(Request $request, $id)
     {
+        $this->authorize('update', User::class);
+
         $request->validate([
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = User::findOrFail($id);
-        
+
         $user->update([
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password)
+            'password' => Hash::make($request->password)
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Password changed successfully.'
-        ]);
+        return ApiResponse::success(
+            null,
+            'Password changed successfully'
+        );
     }
 }
