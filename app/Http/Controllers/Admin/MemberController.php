@@ -105,7 +105,13 @@ class MemberController extends Controller
         $this->authorize('delete', User::class);
 
         $member = User::findOrFail($id);
-        $member->delete();
+        
+        // Prevent deletion if they have financial records
+        if ($member->installments()->exists() || $member->loans()->exists() || $member->payouts()->exists()) {
+            return ApiResponse::error('Cannot delete member with financial records (installments/loans). Please resolve their accounts first.', 400);
+        }
+
+        $member->delete(); // This will now Soft Delete because we added the SoftDeletes trait
 
         return ApiResponse::success(
             null,

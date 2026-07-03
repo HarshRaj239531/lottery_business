@@ -69,11 +69,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // 🧑 User Specific API Routes
 Route::prefix('user')->group(function () {
-    Route::post('/login', [\App\Http\Controllers\User\AuthController::class, 'login']);
+    Route::post('/login', [\App\Http\Controllers\Api\UserAuthController::class, 'login']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\User\DashboardController::class, 'index']);
-        Route::post('/logout', [\App\Http\Controllers\User\AuthController::class, 'logout']);
+        Route::post('/logout', [\App\Http\Controllers\Api\UserAuthController::class, 'logout']);
 
         // 👤 Profile & Vault
         Route::get('/profile', [\App\Http\Controllers\User\ProfileController::class, 'index']);
