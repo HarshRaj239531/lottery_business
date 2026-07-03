@@ -120,11 +120,11 @@ class MemberDashboardController extends Controller
     {
         $user = $request->user();
         return ApiResponse::success([
-            'id_proof' => $user->id_proof,
-            'address_proof' => $user->address, // Assuming address might contain doc path or just use aadhar_card
-            'photo' => $user->photo,
-            'aadhar_card' => $user->aadhar_card,
-            'pan_card' => $user->pan_card,
+            'id_proof' => $user->id_proof ? url("/api/documents/{$user->id_proof}") : null,
+            'address_proof' => $user->address,
+            'photo' => $user->photo ? url("/api/documents/{$user->photo}") : null,
+            'aadhar_card' => $user->aadhar_card ? url("/api/documents/{$user->aadhar_card}") : null,
+            'pan_card' => $user->pan_card ? url("/api/documents/{$user->pan_card}") : null,
             'bank_account' => [
                 'bank_name' => $user->bank_name,
                 'account_number' => $user->bank_account_number,
@@ -146,12 +146,14 @@ class MemberDashboardController extends Controller
         $type = $request->document_type;
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('documents', 'public');
+            $path = $request->file('file')->store("kyc/{$user->id}", 'local');
             $user->$type = $path;
             $user->save();
         }
 
-        return ApiResponse::success([$type => $user->$type], 'Document uploaded successfully.');
+        return ApiResponse::success([
+            $type => url("/api/documents/{$user->$type}")
+        ], 'Document uploaded securely.');
     }
 
     // 🏦 Update Bank Account

@@ -61,6 +61,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Support
         Route::post('/support/ticket', [\App\Http\Controllers\Agent\SupportController::class, 'submitTicket']);
     });
+
+    // 🔒 Secure Document Viewer
+    Route::get('/documents/kyc/{userId}/{filename}', [\App\Http\Controllers\Api\DocumentController::class, 'showKyc']);
+
 });
 
 // 🧑 User Specific API Routes

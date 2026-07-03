@@ -39,22 +39,22 @@ class KycController extends Controller
 
             // Delete old files (optional but recommended)
             if ($user->aadhar_card) {
-                Storage::disk('public')->delete($user->aadhar_card);
+                Storage::disk('local')->delete($user->aadhar_card);
             }
             if ($user->pan_card) {
-                Storage::disk('public')->delete($user->pan_card);
+                Storage::disk('local')->delete($user->pan_card);
             }
 
             // Upload front
             if ($request->hasFile('front_image')) {
                 $frontPath = $request->file('front_image')
-                    ->store("kyc/{$user->id}", 'public');
+                    ->store("kyc/{$user->id}", 'local');
             }
 
             // Upload back
             if ($request->hasFile('back_image')) {
                 $backPath = $request->file('back_image')
-                    ->store("kyc/{$user->id}", 'public');
+                    ->store("kyc/{$user->id}", 'local');
             }
 
             // Save based on document type
@@ -82,12 +82,12 @@ class KycController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'KYC submitted successfully',
+                'message' => 'KYC submitted securely',
                 'data' => [
                     'user_id' => $user->id,
                     'document_type' => $data['document_type'],
-                    'front_url' => $frontPath ? Storage::url($frontPath) : null,
-                    'back_url' => $backPath ? Storage::url($backPath) : null,
+                    'front_url' => $frontPath ? url("/api/documents/{$frontPath}") : null,
+                    'back_url' => $backPath ? url("/api/documents/{$backPath}") : null,
                 ]
             ]);
 

@@ -49,17 +49,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Generate secure private URLs instead of public storage URLs
         $documents = [
-            'aadhar_card' => $user->aadhar_card ? Storage::url($user->aadhar_card) : null,
-            'pan_card' => $user->pan_card ? Storage::url($user->pan_card) : null,
-            'id_proof' => $user->id_proof ? Storage::url($user->id_proof) : null,
-            'photo' => $user->photo ? Storage::url($user->photo) : null,
+            'aadhar_card' => $user->aadhar_card ? url("/api/documents/{$user->aadhar_card}") : null,
+            'pan_card' => $user->pan_card ? url("/api/documents/{$user->pan_card}") : null,
+            'id_proof' => $user->id_proof ? url("/api/documents/{$user->id_proof}") : null,
+            'photo' => $user->photo ? url("/api/documents/{$user->photo}") : null,
         ];
 
-        return ApiResponse::success($documents, 'Vault documents fetched');
+        return ApiResponse::success($documents, 'Vault documents fetched securely');
     }
 
-    // 📁 Upload to Vault
+    // 📁 Upload to Vault (Secure Local Storage)
     public function uploadVault(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -79,28 +80,28 @@ class ProfileController extends Controller
             $updates = [];
 
             if ($request->hasFile('aadhar_card')) {
-                if ($user->aadhar_card) Storage::disk('public')->delete($user->aadhar_card);
-                $updates['aadhar_card'] = $request->file('aadhar_card')->store("kyc/{$user->id}", 'public');
+                if ($user->aadhar_card) Storage::disk('local')->delete($user->aadhar_card);
+                $updates['aadhar_card'] = $request->file('aadhar_card')->store("kyc/{$user->id}", 'local');
             }
 
             if ($request->hasFile('pan_card')) {
-                if ($user->pan_card) Storage::disk('public')->delete($user->pan_card);
-                $updates['pan_card'] = $request->file('pan_card')->store("kyc/{$user->id}", 'public');
+                if ($user->pan_card) Storage::disk('local')->delete($user->pan_card);
+                $updates['pan_card'] = $request->file('pan_card')->store("kyc/{$user->id}", 'local');
             }
 
             if ($request->hasFile('id_proof')) {
-                if ($user->id_proof) Storage::disk('public')->delete($user->id_proof);
-                $updates['id_proof'] = $request->file('id_proof')->store("kyc/{$user->id}", 'public');
+                if ($user->id_proof) Storage::disk('local')->delete($user->id_proof);
+                $updates['id_proof'] = $request->file('id_proof')->store("kyc/{$user->id}", 'local');
             }
 
             if ($request->hasFile('photo')) {
-                if ($user->photo) Storage::disk('public')->delete($user->photo);
-                $updates['photo'] = $request->file('photo')->store("kyc/{$user->id}", 'public');
+                if ($user->photo) Storage::disk('local')->delete($user->photo);
+                $updates['photo'] = $request->file('photo')->store("kyc/{$user->id}", 'local');
             }
 
             if (!empty($updates)) {
                 $user->update($updates);
-                return ApiResponse::success($updates, 'Documents uploaded successfully');
+                return ApiResponse::success($updates, 'Documents uploaded successfully to secure vault');
             }
 
             return ApiResponse::error('No files provided', 400);
