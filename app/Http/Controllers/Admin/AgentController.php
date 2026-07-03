@@ -11,6 +11,10 @@ use App\Models\AgentTarget;
 use App\Models\AgentCollection;
 use App\Models\Installment;
 use App\Models\LoanInstallment;
+use App\Models\Committee;
+use App\Models\Payout;
+use App\Models\User;
+use App\Services\NotificationService;
 
 class AgentController extends Controller
 {
@@ -115,6 +119,59 @@ class AgentController extends Controller
                         'paid_date'    => now(),
                         'collected_by' => $collection->agent_id,
                     ]);
+                    
+                    // Check pending installments for this user in this committee
+                    $pendingCount = Installment::where('user_id', $installment->user_id)
+                        ->where('committee_id', $installment->committee_id)
+                        ->where('status', 'pending')
+                        ->count();
+
+                    if ($pendingCount === 0) {
+                        $committee = Committee::find($installment->committee_id);
+                        
+                        if ($committee) {
+                            $totalDeposits = Installment::where('user_id', $installment->user_id)
+                                ->where('committee_id', $installment->committee_id)
+                                ->where('status', 'paid')
+                                ->sum('amount');
+
+                            $returnPercentage = $committee->return_percentage ?? 0;
+                            $returnAmount = ($totalDeposits * $returnPercentage) / 100;
+                            $totalPayout = $totalDeposits + $returnAmount;
+
+                            // Create payout
+                            Payout::firstOrCreate(
+                                [
+                                    'user_id' => $installment->user_id,
+                                    'committee_id' => $installment->committee_id
+                                ],
+                                [
+                                    'total_deposits' => $totalDeposits,
+                                    'return_amount' => $returnAmount,
+                                    'total_payout' => $totalPayout,
+                                    'status' => 'pending'
+                                ]
+                            );
+
+                            // Final Notification
+                            try {
+                                $user = User::find($installment->user_id);
+                                if ($user) {
+                                    app(NotificationService::class)->sendNotification(
+                                        $user,
+                                        "Committee Completed",
+                                        "Total ₹{$totalPayout} payout processing"
+                                    );
+                                }
+                            } catch (\Exception $e) {}
+
+                            // Update pivot
+                            DB::table('committee_user')
+                                ->where('committee_id', $installment->committee_id)
+                                ->where('user_id', $installment->user_id)
+                                ->update(['status' => 'completed']);
+                        }
+                    }
                 }
             }
 

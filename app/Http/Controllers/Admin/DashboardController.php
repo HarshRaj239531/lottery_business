@@ -67,7 +67,7 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
 
-        $paidMembers = User::where('role', 'member')
+        $paidMembers = User::role('member')
             ->whereHas('installments')
             ->whereDoesntHave('installments', function ($q) use ($today) {
                 $q->where('status', 'pending')
@@ -91,7 +91,7 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
 
-        $dueMembers = User::where('role', 'member')
+        $dueMembers = User::role('member')
             ->whereHas('installments', function ($q) use ($today) {
                 $q->where('status', 'pending')
                   ->whereDate('due_date', '<=', $today);

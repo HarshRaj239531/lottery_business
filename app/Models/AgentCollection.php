@@ -9,13 +9,16 @@ class AgentCollection extends Model
     protected $fillable = [
         'agent_id',
         'member_id',
-        'collection_type',
+        'collection_type', // 'committee' or 'loan'
         'amount_collected',
         'details',
-        'status',
+        'status', // pending, approved, rejected
+        'commission_percentage',
+        'commission_amount',
+        'commission_status',
         'installment_id',
         'loan_installment_id',
-        'collected_at',
+        'collected_at'
     ];
 
     public function agent()
@@ -30,11 +33,11 @@ class AgentCollection extends Model
 
     public function installment()
     {
-        return $this->belongsTo(Installment::class, 'installment_id');
+        return $this->belongsTo(Installment::class);
     }
 
     public function loanInstallment()
     {
-        return $this->belongsTo(LoanInstallment::class, 'loan_installment_id');
+        return $this->belongsTo(LoanInstallment::class);
     }
 }

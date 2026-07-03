@@ -75,15 +75,14 @@ class PaymentController extends Controller
                 $referenceId = $installment->id;
             }
 
-            // Create Journal Entry (Credit to User's Account/Ledger)
-            JournalEntry::create([
-                'transaction_date' => now(),
+            // Create User Transaction (Log member payment)
+            App\Models\UserTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'credit',
+                'amount' => $amount,
                 'description' => $description,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
-                'account_id' => $user->id,
-                'credit' => $amount,
-                'debit' => null
             ]);
 
             DB::commit();

@@ -14,14 +14,14 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // Calculate total balance from Journal Entries
-        $credits = JournalEntry::where('account_id', $user->id) // Assuming account_id matches user_id for member accounts
-            ->whereNotNull('credit')
-            ->sum('credit');
+        // Calculate total balance from User Transactions
+        $credits = App\Models\UserTransaction::where('user_id', $user->id)
+            ->where('type', 'credit')
+            ->sum('amount');
             
-        $debits = JournalEntry::where('account_id', $user->id)
-            ->whereNotNull('debit')
-            ->sum('debit');
+        $debits = App\Models\UserTransaction::where('user_id', $user->id)
+            ->where('type', 'debit')
+            ->sum('amount');
             
         $totalBalance = $credits - $debits;
 
@@ -32,8 +32,8 @@ class DashboardController extends Controller
         $activeLoansCount = Loan::where('user_id', $user->id)->where('status', 'active')->count();
 
         // Recent Transactions
-        $recentTransactions = JournalEntry::where('account_id', $user->id)
-            ->orderBy('transaction_date', 'desc')
+        $recentTransactions = App\Models\UserTransaction::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
