@@ -14,6 +14,7 @@ class LoanInstallment extends Model
         'interest_component',
         'status',
         'paid_date',
+        'collected_by',
     ];
 
     public function loan()

@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\DashboardService;
+use Illuminate\Support\Carbon;
+use App\Models\User;
+use App\Helpers\ApiResponse;
 
 class DashboardController extends Controller
 {
@@ -14,63 +17,94 @@ class DashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    // 📊 Main Dashboard API
+    /**
+     * MAIN DASHBOARD
+     */
     public function index()
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->dashboardService->getStats()
-        ]);
+        try {
+            return ApiResponse::success(
+                $this->dashboardService->getStats(),
+                'Dashboard data fetched'
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Dashboard error', 500);
+        }
     }
 
-    // 📈 Monthly Profit API
+    /**
+     * MONTHLY PROFIT
+     */
     public function monthlyProfit()
     {
-        return response()->json(
-            $this->dashboardService->monthlyProfit()
-        );
+        try {
+            return ApiResponse::success(
+                $this->dashboardService->monthlyProfit()
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error fetching monthly profit', 500);
+        }
     }
 
-    // 📅 Daily Collection API
+    /**
+     * DAILY COLLECTION
+     */
     public function dailyCollection()
     {
-        return response()->json(
-            $this->dashboardService->dailyCollection()
-        );
+        try {
+            return ApiResponse::success(
+                $this->dashboardService->dailyCollection()
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error fetching daily collection', 500);
+        }
     }
 
+    /**
+     * PAID MEMBERS
+     */
     public function paidMembersList()
     {
-        $paidMembers = \App\Models\User::role('member')
-            ->whereHas('installments')
-            ->whereDoesntHave('installments', function ($query) {
-                $query->where('status', 'pending')->where('due_date', '<=', \Carbon\Carbon::today());
-            })
-            ->withSum(['installments as total_paid' => function($query) {
-                $query->where('status', 'paid');
-            }], 'amount')
-            ->withSum(['installments as total_due' => function($query) {
-                $query->where('status', 'pending');
-            }], 'amount')
-            ->get();
+        $today = Carbon::today();
 
-        return \App\Helpers\ApiResponse::success($paidMembers);
+        $paidMembers = User::role('member')
+            ->whereHas('installments')
+            ->whereDoesntHave('installments', function ($q) use ($today) {
+                $q->where('status', 'pending')
+                  ->whereDate('due_date', '<=', $today);
+            })
+            ->withSum(['installments as total_paid' => function ($q) {
+                $q->where('status', 'paid');
+            }], 'amount')
+            ->withSum(['installments as total_due' => function ($q) {
+                $q->where('status', 'pending');
+            }], 'amount')
+            ->paginate(10);
+
+        return ApiResponse::success($paidMembers);
     }
 
+    /**
+     * DUE MEMBERS
+     */
     public function dueMembersList()
     {
-        $dueMembers = \App\Models\User::role('member')
-            ->whereHas('installments', function ($query) {
-                $query->where('status', 'pending')->where('due_date', '<=', \Carbon\Carbon::today());
-            })
-            ->withSum(['installments as overdue_amount' => function($query) {
-                $query->where('status', 'pending')->where('due_date', '<=', \Carbon\Carbon::today());
-            }], 'amount')
-            ->withSum(['installments as total_paid' => function($query) {
-                $query->where('status', 'paid');
-            }], 'amount')
-            ->get();
+        $today = Carbon::today();
 
-        return \App\Helpers\ApiResponse::success($dueMembers);
+        $dueMembers = User::role('member')
+            ->whereHas('installments', function ($q) use ($today) {
+                $q->where('status', 'pending')
+                  ->whereDate('due_date', '<=', $today);
+            })
+            ->withSum(['installments as overdue_amount' => function ($q) use ($today) {
+                $q->where('status', 'pending')
+                  ->whereDate('due_date', '<=', $today);
+            }], 'amount')
+            ->withSum(['installments as total_paid' => function ($q) {
+                $q->where('status', 'paid');
+            }], 'amount')
+            ->paginate(10);
+
+        return ApiResponse::success($dueMembers);
     }
 }

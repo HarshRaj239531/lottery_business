@@ -3,112 +3,233 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 use App\Models\AgentTarget;
 use App\Models\AgentCollection;
+use App\Models\Installment;
+use App\Models\LoanInstallment;
+use App\Models\Committee;
+use App\Models\Payout;
 use App\Models\User;
-use Illuminate\Http\Request;
-use App\Helpers\ApiResponse;
+use App\Services\NotificationService;
 
 class AgentController extends Controller
 {
-    // Assign Target to an Agent
+    /**
+     * Assign Target to Agent
+     */
     public function assignTarget(Request $request)
     {
-        $request->validate([
-            'agent_id' => 'required|exists:users,id',
-            'target_type' => 'required|in:amount,count',
+        $validated = $request->validate([
+            'agent_id'     => 'required|exists:users,id',
+            'target_type'  => 'required|in:amount,count',
             'target_value' => 'required|numeric|min:1',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date'   => 'required|date',
+            'end_date'     => 'required|date|after_or_equal:start_date',
         ]);
 
         $target = AgentTarget::create([
-            'agent_id' => $request->agent_id,
-            'admin_id' => auth()->id(),
-            'target_type' => $request->target_type,
-            'target_value' => $request->target_value,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'status' => 'active',
+            'agent_id'     => $validated['agent_id'],
+            'admin_id'     => Auth::id(),
+            'target_type'  => $validated['target_type'],
+            'target_value' => $validated['target_value'],
+            'start_date'   => $validated['start_date'],
+            'end_date'     => $validated['end_date'],
+            'status'       => 'active',
         ]);
 
         return response()->json([
-            'status' => true,
-            'message' => 'Target successfully assigned to the agent.',
-            'data' => $target
-        ]);
+            'status'  => true,
+            'message' => 'Target assigned successfully',
+            'data'    => $target
+        ], 201);
     }
 
-    // Get all targets for a specific agent or all agents
+    /**
+     * Get Targets
+     */
     public function getTargets(Request $request)
     {
         $query = AgentTarget::with('agent');
-        if ($request->has('agent_id')) {
+
+        if ($request->filled('agent_id')) {
             $query->where('agent_id', $request->agent_id);
         }
-        return response()->json($query->orderBy('created_at', 'desc')->get());
+
+        return response()->json([
+            'status' => true,
+            'data'   => $query->latest()->paginate(15)
+        ]);
     }
 
-    // Get all agent collections waiting for approval
+    /**
+     * Get Collections
+     */
     public function getCollections(Request $request)
     {
-        $query = AgentCollection::with(['agent', 'member', 'installment.committee', 'loanInstallment.loan']);
-        if ($request->has('status')) {
+        $query = AgentCollection::with([
+            'agent',
+            'member',
+            'installment.committee',
+            'loanInstallment.loan'
+        ]);
+
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        return response()->json($query->orderBy('created_at', 'desc')->get());
+
+        return response()->json([
+            'status' => true,
+            'data'   => $query->latest()->paginate(15)
+        ]);
     }
 
-    // Admin approves the collection
-    public function approveCollection(Request $request, $id)
+    /**
+     * Approve Collection (SECURE + TRANSACTION)
+     */
+    public function approveCollection($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $collection = AgentCollection::lockForUpdate()->findOrFail($id);
+
+            if ($collection->status === 'approved') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Already approved'
+                ], 400);
+            }
+
+            $collection->update([
+                'status' => 'approved'
+            ]);
+
+            // Committee Installment
+            if ($collection->collection_type === 'committee' && $collection->installment_id) {
+
+                $installment = Installment::find($collection->installment_id);
+
+                if ($installment && $installment->status !== 'paid') {
+                    $installment->update([
+                        'status'       => 'paid',
+                        'paid_date'    => now(),
+                        'collected_by' => $collection->agent_id,
+                    ]);
+                    
+                    // Check pending installments for this user in this committee
+                    $pendingCount = Installment::where('user_id', $installment->user_id)
+                        ->where('committee_id', $installment->committee_id)
+                        ->where('status', 'pending')
+                        ->count();
+
+                    if ($pendingCount === 0) {
+                        $committee = Committee::find($installment->committee_id);
+                        
+                        if ($committee) {
+                            $totalDeposits = Installment::where('user_id', $installment->user_id)
+                                ->where('committee_id', $installment->committee_id)
+                                ->where('status', 'paid')
+                                ->sum('amount');
+
+                            $returnPercentage = $committee->return_percentage ?? 0;
+                            $returnAmount = ($totalDeposits * $returnPercentage) / 100;
+                            $totalPayout = $totalDeposits + $returnAmount;
+
+                            // Create payout
+                            Payout::firstOrCreate(
+                                [
+                                    'user_id' => $installment->user_id,
+                                    'committee_id' => $installment->committee_id
+                                ],
+                                [
+                                    'total_deposits' => $totalDeposits,
+                                    'return_amount' => $returnAmount,
+                                    'total_payout' => $totalPayout,
+                                    'status' => 'pending'
+                                ]
+                            );
+
+                            // Final Notification
+                            try {
+                                $user = User::find($installment->user_id);
+                                if ($user) {
+                                    app(NotificationService::class)->sendNotification(
+                                        $user,
+                                        "Committee Completed",
+                                        "Total ₹{$totalPayout} payout processing"
+                                    );
+                                }
+                            } catch (\Exception $e) {}
+
+                            // Update pivot
+                            DB::table('committee_user')
+                                ->where('committee_id', $installment->committee_id)
+                                ->where('user_id', $installment->user_id)
+                                ->update(['status' => 'completed']);
+                        }
+                    }
+                }
+            }
+
+            // Loan Installment
+            if ($collection->collection_type === 'loan' && $collection->loan_installment_id) {
+
+                $loanInstallment = LoanInstallment::find($collection->loan_installment_id);
+
+                if ($loanInstallment && $loanInstallment->status !== 'paid') {
+                    $loanInstallment->update([
+                        'status'       => 'paid',
+                        'paid_date'    => now(),
+                        'collected_by' => $collection->agent_id,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Approved successfully',
+                'data' => $collection
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject Collection
+     */
+    public function rejectCollection($id)
     {
         $collection = AgentCollection::findOrFail($id);
 
         if ($collection->status === 'approved') {
-            return response()->json(['status' => false, 'message' => 'Collection already approved.']);
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot reject approved collection'
+            ], 400);
         }
 
         $collection->update([
-            'status' => 'approved',
+            'status' => 'rejected'
         ]);
-
-        // Update the related installment to paid
-        if ($collection->collection_type === 'committee' && $collection->installment_id) {
-            $installment = \App\Models\Installment::find($collection->installment_id);
-            if ($installment) {
-                $installment->update([
-                    'status' => 'paid',
-                    'paid_date' => now(),
-                    'collected_by' => $collection->agent_id,
-                ]);
-            }
-        } elseif ($collection->collection_type === 'loan' && $collection->loan_installment_id) {
-            $loanInstallment = \App\Models\LoanInstallment::find($collection->loan_installment_id);
-            if ($loanInstallment) {
-                $loanInstallment->update([
-                    'status' => 'paid',
-                    'paid_date' => now(),
-                    'collected_by' => $collection->agent_id,
-                ]);
-            }
-        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Collection approved and installment marked as paid.',
-            'data' => $collection
-        ]);
-    }
-
-    // Admin rejects the collection
-    public function rejectCollection($id)
-    {
-        $collection = AgentCollection::findOrFail($id);
-        $collection->update(['status' => 'rejected']);
-        
-        return response()->json([
-            'status' => true,
-            'message' => 'Collection rejected.'
+            'message' => 'Collection rejected'
         ]);
     }
 }

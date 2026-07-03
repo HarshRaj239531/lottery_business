@@ -41,13 +41,66 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // 🕵️‍♂️ Agent App APIs
     Route::middleware('role:agent')->prefix('agent')->group(function () {
-        Route::get('/profile', [\App\Http\Controllers\Api\AgentDashboardController::class, 'profile']);
-        Route::get('/search-member', [\App\Http\Controllers\Api\AgentDashboardController::class, 'searchMember']);
-        Route::get('/committee-members', [\App\Http\Controllers\Api\AgentDashboardController::class, 'committeeMembers']);
-        Route::get('/loan-members', [\App\Http\Controllers\Api\AgentDashboardController::class, 'loanMembers']);
-        Route::post('/collections/submit', [\App\Http\Controllers\Api\AgentDashboardController::class, 'submitCollection']);
-        Route::get('/targets', [\App\Http\Controllers\Api\AgentDashboardController::class, 'myTargets']);
-        Route::get('/collections', [\App\Http\Controllers\Api\AgentDashboardController::class, 'myCollections']);
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Agent\DashboardController::class, 'dashboard']);
+        
+        // Profile & Settings
+        Route::get('/profile', [\App\Http\Controllers\Agent\ProfileController::class, 'index']);
+        Route::post('/profile/update', [\App\Http\Controllers\Agent\ProfileController::class, 'update']);
+        Route::get('/qr-code', [\App\Http\Controllers\Agent\ProfileController::class, 'qrCode']);
+        
+        // Members / Clients
+        Route::get('/search-member', [\App\Http\Controllers\Agent\MemberController::class, 'search']);
+        Route::get('/clients', [\App\Http\Controllers\Agent\ClientController::class, 'index']);
+        Route::get('/clients/{id}', [\App\Http\Controllers\Agent\ClientController::class, 'show']);
+        
+        // Collections
+        Route::post('/collections/submit', [\App\Http\Controllers\Agent\CollectionController::class, 'submit']);
+        Route::get('/collections', [\App\Http\Controllers\Agent\CollectionController::class, 'history']);
+
+        // Support
+        Route::post('/support/ticket', [\App\Http\Controllers\Agent\SupportController::class, 'submitTicket']);
+    });
+
+    // 🔒 Secure Document Viewer
+    Route::get('/documents/kyc/{userId}/{filename}', [\App\Http\Controllers\Api\DocumentController::class, 'showKyc']);
+
+});
+
+// 🧑 User Specific API Routes
+Route::prefix('user')->group(function () {
+    Route::post('/login', [\App\Http\Controllers\Api\UserAuthController::class, 'login']);
+
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\User\DashboardController::class, 'index']);
+        Route::post('/logout', [\App\Http\Controllers\Api\UserAuthController::class, 'logout']);
+
+        // 👤 Profile & Vault
+        Route::get('/profile', [\App\Http\Controllers\User\ProfileController::class, 'index']);
+        Route::post('/profile/update', [\App\Http\Controllers\User\ProfileController::class, 'update']);
+        Route::get('/vault', [\App\Http\Controllers\User\ProfileController::class, 'vault']);
+        Route::post('/vault/upload', [\App\Http\Controllers\User\ProfileController::class, 'uploadVault']);
+
+        // 🏢 Committees
+        Route::get('/committees', [\App\Http\Controllers\User\CommitteeController::class, 'index']);
+        Route::get('/committees/{id}', [\App\Http\Controllers\User\CommitteeController::class, 'show']);
+        Route::post('/committees/{id}/join', [\App\Http\Controllers\User\CommitteeController::class, 'join']);
+        Route::get('/my-committees', [\App\Http\Controllers\User\CommitteeController::class, 'myCommittees']);
+
+        // 💳 Loans
+        Route::get('/loans', [\App\Http\Controllers\User\LoanController::class, 'index']);
+        Route::get('/loans/{id}', [\App\Http\Controllers\User\LoanController::class, 'show']);
+
+        // 💰 Installments
+        Route::get('/installments/pending', [\App\Http\Controllers\User\InstallmentController::class, 'pending']);
+        Route::get('/installments/paid', [\App\Http\Controllers\User\InstallmentController::class, 'paid']);
+
+        // 🏆 Lottery
+        Route::get('/lotteries/winners', [\App\Http\Controllers\User\LotteryController::class, 'winners']);
+        Route::get('/lotteries/history', [\App\Http\Controllers\User\LotteryController::class, 'history']);
+
+        // 💸 Payments
+        Route::post('/payments/pay', [\App\Http\Controllers\User\PaymentController::class, 'pay']);
     });
 });
 

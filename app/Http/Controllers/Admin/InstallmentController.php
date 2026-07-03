@@ -4,162 +4,208 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Installment;
+use App\Models\User;
+use App\Models\Committee;
+use App\Models\Payout;
 use App\Http\Requests\InstallmentRequest;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class InstallmentController extends Controller
 {
-    // 💰 Collect Payment
+    // 💰 Collect Payment (SECURE VERSION)
     public function collect(InstallmentRequest $request, NotificationService $notify)
     {
-        $data = $request->validated();
-        
-        // Find the oldest pending installment
-        $installment = Installment::where('user_id', $data['user_id'])
-            ->where('committee_id', $data['committee_id'])
-            ->where('status', 'pending')
-            ->orderBy('due_date', 'asc')
-            ->first();
-
-        if (!$installment) {
+        // 🔐 Authorization check
+        if (!$request->user()->hasRole('Super Admin')) {
             return response()->json([
                 'status' => false,
-                'message' => 'No pending installments found for this user in this committee.'
-            ], 400);
+                'message' => 'Unauthorized'
+            ], 403);
         }
 
-        $installment->update([
-            'amount' => $data['amount'],
-            'status' => 'paid',
-            'paid_date' => $data['paid_date'] ?? now()->format('Y-m-d'),
-            'collected_by' => $request->user()->id
-        ]);
+        $data = $request->validated();
 
-        // 📲 Send SMS after payment
-        $user = \App\Models\User::find($request->user_id);
-        $notify->sendNotification($user, "Payment Received", "Success! Your deposit of ₹{$installment->amount} has been received.");
+        DB::beginTransaction();
 
-        // Check if all installments are paid for this user in this committee
-        $pendingCount = Installment::where('user_id', $data['user_id'])
-            ->where('committee_id', $data['committee_id'])
-            ->where('status', 'pending')
-            ->count();
-
-        if ($pendingCount === 0) {
-            $committee = \App\Models\Committee::find($data['committee_id']);
-            $totalDeposits = Installment::where('user_id', $data['user_id'])
+        try {
+            // Find pending installment
+            $installment = Installment::where('user_id', $data['user_id'])
                 ->where('committee_id', $data['committee_id'])
-                ->where('status', 'paid')
-                ->sum('amount');
-            
-            $returnPercentage = $committee->return_percentage ?? 0;
-            $returnAmount = ($totalDeposits * $returnPercentage) / 100;
-            $totalPayout = $totalDeposits + $returnAmount;
+                ->where('status', 'pending')
+                ->orderBy('due_date', 'asc')
+                ->first();
 
-            // Auto-Create Payout
-            \App\Models\Payout::firstOrCreate([
-                'user_id' => $data['user_id'],
-                'committee_id' => $data['committee_id']
-            ], [
-                'total_deposits' => $totalDeposits,
-                'return_amount' => $returnAmount,
-                'total_payout' => $totalPayout,
-                'status' => 'pending'
+            if (!$installment) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No pending installments found'
+                ], 400);
+            }
+
+            // Update installment
+            $installment->update([
+                'amount' => $data['amount'],
+                'status' => 'paid',
+                'paid_date' => $data['paid_date'] ?? now(),
+                'collected_by' => $request->user()->id
             ]);
 
-            // Final SMS
-            $notify->sendNotification($user, "Committee Completed!", "Congratulations! You have completed the {$committee->name} committee. Total Deposited: ₹{$totalDeposits}. Profit: ₹{$returnAmount}. Your Total Payout of ₹{$totalPayout} is being processed.");
+            // Get user
+            $user = User::findOrFail($data['user_id']);
 
-            // Update Pivot status
-            \Illuminate\Support\Facades\DB::table('committee_user')
+            // 🔔 Notification (safe)
+            try {
+                $notify->sendNotification(
+                    $user,
+                    "Payment Received",
+                    "₹{$installment->amount} received successfully"
+                );
+            } catch (\Exception $e) {}
+
+            // Check pending
+            $pendingCount = Installment::where('user_id', $data['user_id'])
                 ->where('committee_id', $data['committee_id'])
-                ->where('user_id', $data['user_id'])
-                ->update(['status' => 'completed']);
-        }
+                ->where('status', 'pending')
+                ->count();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Payment Collected Successfully',
-            'data' => $installment
-        ]);
+            if ($pendingCount === 0) {
+
+                $committee = Committee::findOrFail($data['committee_id']);
+
+                $totalDeposits = Installment::where('user_id', $data['user_id'])
+                    ->where('committee_id', $data['committee_id'])
+                    ->where('status', 'paid')
+                    ->sum('amount');
+
+                $returnPercentage = $committee->return_percentage ?? 0;
+                $returnAmount = ($totalDeposits * $returnPercentage) / 100;
+                $totalPayout = $totalDeposits + $returnAmount;
+
+                // Create payout
+                Payout::firstOrCreate(
+                    [
+                        'user_id' => $data['user_id'],
+                        'committee_id' => $data['committee_id']
+                    ],
+                    [
+                        'total_deposits' => $totalDeposits,
+                        'return_amount' => $returnAmount,
+                        'total_payout' => $totalPayout,
+                        'status' => 'pending'
+                    ]
+                );
+
+                // Final Notification
+                try {
+                    $notify->sendNotification(
+                        $user,
+                        "Committee Completed",
+                        "Total ₹{$totalPayout} payout processing"
+                    );
+                } catch (\Exception $e) {}
+
+                // Update pivot
+                DB::table('committee_user')
+                    ->where('committee_id', $data['committee_id'])
+                    ->where('user_id', $data['user_id'])
+                    ->update(['status' => 'completed']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Payment collected successfully',
+                'data' => $installment
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // ⚠️ Send Due Warnings
     public function sendWarnings(NotificationService $notify)
     {
-        // Find all pending installments where the due_date is in the past
-        $pendingInstallments = Installment::with('user')
+        $count = 0;
+
+        Installment::with('user')
             ->where('status', 'pending')
             ->where('due_date', '<', now())
-            ->get();
-
-        $count = 0;
-        foreach ($pendingInstallments as $installment) {
-            $user = $installment->user;
-            if ($user) {
-                $notify->sendNotification(
-                    $user, 
-                    "Payment Overdue", 
-                    "Warning: You have missed the due date for your ₹{$installment->amount} payment. Please deposit immediately."
-                );
-                $count++;
-            }
-        }
+            ->chunk(100, function ($installments) use ($notify, &$count) {
+                foreach ($installments as $installment) {
+                    if ($installment->user) {
+                        try {
+                            $notify->sendNotification(
+                                $installment->user,
+                                "Payment Overdue",
+                                "₹{$installment->amount} overdue"
+                            );
+                            $count++;
+                        } catch (\Exception $e) {}
+                    }
+                }
+            });
 
         return response()->json([
             'status' => true,
-            'message' => "Warning notifications sent to {$count} overdue members."
+            'message' => "$count warnings sent"
         ]);
     }
 
-    // ⏰ Send Payment Reminders
+    // ⏰ Reminders
     public function sendPaymentReminders(NotificationService $notify)
     {
-        // Find pending installments due within the next 3 days
-        $upcomingInstallments = Installment::with('user')
-            ->where('status', 'pending')
-            ->where('due_date', '>=', now())
-            ->where('due_date', '<=', now()->addDays(3))
-            ->get();
-
         $count = 0;
-        foreach ($upcomingInstallments as $installment) {
-            $user = $installment->user;
-            if ($user) {
-                $dueDate = \Carbon\Carbon::parse($installment->due_date)->format('M d, Y');
-                $notify->sendNotification(
-                    $user, 
-                    "Upcoming Payment Reminder", 
-                    "Friendly Reminder: Your upcoming payment of ₹{$installment->amount} is due on {$dueDate}. Please ensure timely deposit."
-                );
-                $count++;
-            }
-        }
+
+        Installment::with('user')
+            ->where('status', 'pending')
+            ->whereBetween('due_date', [now(), now()->addDays(3)])
+            ->chunk(100, function ($installments) use ($notify, &$count) {
+                foreach ($installments as $installment) {
+                    if ($installment->user) {
+                        try {
+                            $notify->sendNotification(
+                                $installment->user,
+                                "Reminder",
+                                "₹{$installment->amount} due soon"
+                            );
+                            $count++;
+                        } catch (\Exception $e) {}
+                    }
+                }
+            });
 
         return response()->json([
             'status' => true,
-            'message' => "Payment reminders sent to {$count} members."
+            'message' => "$count reminders sent"
         ]);
     }
 
-    // 📋 All Payments
+    // 📋 List
     public function index()
     {
-        return response()->json(
-            Installment::with(['user', 'committee'])
-                ->orderBy('id', 'desc')
-                ->take(200)
-                ->get()
-        );
+        return Installment::with(['user', 'committee'])
+            ->latest()
+            ->paginate(20);
     }
 
-    // 👁️ Show Payment
+    // 👁️ Show
     public function show($id)
     {
-        return response()->json(Installment::with(['user', 'committee'])->findOrFail($id));
+        return Installment::with(['user', 'committee'])->findOrFail($id);
     }
 
-    // ✏️ Update Payment
+    // ✏️ Update
     public function update(InstallmentRequest $request, $id)
     {
         $installment = Installment::findOrFail($id);
@@ -167,19 +213,19 @@ class InstallmentController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Payment Updated',
+            'message' => 'Updated',
             'data' => $installment
         ]);
     }
 
-    // ❌ Delete Payment
+    // ❌ Delete
     public function destroy($id)
     {
         Installment::findOrFail($id)->delete();
 
         return response()->json([
             'status' => true,
-            'message' => 'Payment Deleted'
+            'message' => 'Deleted'
         ]);
     }
 }
