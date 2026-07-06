@@ -107,6 +107,21 @@ Use the seeded credentials to log in:
 - **Email**: `admin@example.com`
 - **Password**: `password`
 
+### 8. Adminer Database Viewer
+The project also includes Adminer for browsing the MySQL database through Docker.
+Open Adminer at:
+```
+http://localhost:8080
+```
+Use the following values:
+- **System**: `MySQL / MariaDB`
+- **Server**: `mysql`
+- **Username**: `sail`
+- **Password**: `password`
+- **Database**: `lottery_business`
+
+> Note: Do not use `localhost` as the server inside Adminer when connecting from the container. Use the Docker service name `mysql` instead.
+
 ---
 
 ## 📂 Project Folder Structure
