@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Helpers\ApiResponse;
 use App\Models\JournalEntry;
 use App\Models\Loan;
+use App\Models\UserTransaction;
 
 class DashboardController extends Controller
 {
@@ -15,24 +16,24 @@ class DashboardController extends Controller
         $user = $request->user();
         
         // Calculate total balance from User Transactions
-        $credits = App\Models\UserTransaction::where('user_id', $user->id)
+        $credits = UserTransaction::where('user_id', $user->id)
             ->where('type', 'credit')
             ->sum('amount');
             
-        $debits = App\Models\UserTransaction::where('user_id', $user->id)
+        $debits = UserTransaction::where('user_id', $user->id)
             ->where('type', 'debit')
             ->sum('amount');
             
         $totalBalance = $credits - $debits;
-
+ 
         // Active Committees
         $activeCommitteesCount = $user->committees()->where('committee_user.status', 'active')->count();
-
+ 
         // Active Loans
         $activeLoansCount = Loan::where('user_id', $user->id)->where('status', 'active')->count();
-
+ 
         // Recent Transactions
-        $recentTransactions = App\Models\UserTransaction::where('user_id', $user->id)
+        $recentTransactions = UserTransaction::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();

@@ -121,6 +121,7 @@
                 if (targetView === 'kyc') loadKycData();
                 if (targetView === 'collections') loadCollectionsOverviewData();
                 if (targetView === 'settings') loadSettingsData();
+                if (targetView === 'materials') { if (typeof loadMaterialsData === 'function') loadMaterialsData(); }
                 if (targetView === 'member-ledger') { document.getElementById('member-ledger-tbody').innerHTML=''; document.getElementById('ledger-member-name').textContent=''; }
                 if (targetView === 'committee-ledger') { document.getElementById('committee-ledger-tbody').innerHTML=''; document.getElementById('ledger-committee-name').textContent=''; }
             } else {

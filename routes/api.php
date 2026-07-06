@@ -87,6 +87,10 @@ Route::prefix('user')->group(function () {
         Route::post('/committees/{id}/join', [\App\Http\Controllers\User\CommitteeController::class, 'join']);
         Route::get('/my-committees', [\App\Http\Controllers\User\CommitteeController::class, 'myCommittees']);
 
+        // 🏗️ Materials & Stocks
+        Route::get('/materials', [\App\Http\Controllers\User\MaterialController::class, 'index']);
+        Route::get('/materials/stocks', [\App\Http\Controllers\User\MaterialController::class, 'stocks']);
+
         // 💳 Loans
         Route::get('/loans', [\App\Http\Controllers\User\LoanController::class, 'index']);
         Route::get('/loans/{id}', [\App\Http\Controllers\User\LoanController::class, 'show']);
@@ -136,6 +140,10 @@ Route::prefix('admin')->group(function () {
         // 🏦 Committees
         Route::get('/committees/{committee}/collection-stats', [CommitteeController::class, 'collectionStats']);
         Route::apiResource('committees', CommitteeController::class);
+
+        // 🏗️ Materials & Stocks Admin Management
+        Route::apiResource('materials', \App\Http\Controllers\Admin\MaterialController::class);
+        Route::apiResource('material-stocks', \App\Http\Controllers\Admin\MaterialStockController::class);
 
         // 💳 Loans
         Route::get('/loan-installments', [\App\Http\Controllers\Admin\LoanController::class, 'installments']);

@@ -144,6 +144,134 @@
                 </form>
             `;
         }
+        else if (type === 'create-material') {
+            modalTitle.textContent = 'New Material';
+            html = `
+                <form id="modal-form" onsubmit="submitForm(event, 'materials')">
+                    <div class="input-group"><label>Name</label><div class="input-field"><input type="text" id="mat_name" required></div></div>
+                    <div class="input-group"><label>Price (₹)</label><div class="input-field"><input type="number" step="0.01" id="mat_price" required></div></div>
+                    <div class="input-group"><label>Unit</label><div class="input-field"><input type="text" id="mat_unit" required placeholder="e.g. kg, m³, per brick, gm"></div></div>
+                    <div class="input-group"><label>Image URL</label><div class="input-field"><input type="text" id="mat_image_url"></div></div>
+                    <div class="input-group"><label>Status</label>
+                        <select id="mat_status" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="active" selected>Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Create Material</button>
+                </form>
+            `;
+        }
+        else if (type === 'edit-material') {
+            modalTitle.textContent = 'Edit Material #' + id;
+            html = `
+                <form id="modal-form" onsubmit="submitForm(event, 'edit-material', ${id})">
+                    <div class="input-group"><label>Name</label><div class="input-field"><input type="text" id="emat_name" required></div></div>
+                    <div class="input-group"><label>Price (₹)</label><div class="input-field"><input type="number" step="0.01" id="emat_price" required></div></div>
+                    <div class="input-group"><label>Unit</label><div class="input-field"><input type="text" id="emat_unit" required></div></div>
+                    <div class="input-group"><label>Image URL</label><div class="input-field"><input type="text" id="emat_image_url"></div></div>
+                    <div class="input-group"><label>Status</label>
+                        <select id="emat_status" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Material</button>
+                </form>
+            `;
+        }
+        else if (type === 'create-material-stock') {
+            modalTitle.textContent = 'New Stock Transaction';
+            html = `
+                <form id="modal-form" onsubmit="submitForm(event, 'material-stocks')">
+                    <div class="input-group"><label>Material (Optional)</label>
+                        <select id="stock_mat_id" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="">None / General</option>
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Title / Description</label><div class="input-field"><input type="text" id="stock_title" required placeholder="e.g. Cement Bulk Order #827"></div></div>
+                    <div class="input-group"><label>Amount (₹)</label><div class="input-field"><input type="number" step="0.01" id="stock_amount" required></div></div>
+                    <div class="input-group"><label>Type</label>
+                        <select id="stock_type" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="credit" selected>Credit (Add Stock / Sale +)</option>
+                            <option value="debit">Debit (Purchase / Use -)</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Status</label>
+                        <select id="stock_status" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="success" selected>SUCCESS</option>
+                            <option value="pending">PENDING</option>
+                            <option value="failed">FAILED</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Record Transaction</button>
+                </form>
+            `;
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/materials', { headers: getHeaders() });
+                    const json = await res.json();
+                    const select = document.getElementById('stock_mat_id');
+                    if (json.data && select) {
+                        json.data.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.textContent = `${m.name} (${m.unit})`;
+                            select.appendChild(opt);
+                        });
+                    }
+                } catch(e) {}
+            }, 100);
+        }
+        else if (type === 'edit-material-stock') {
+            modalTitle.textContent = 'Edit Stock Transaction #' + id;
+            html = `
+                <form id="modal-form" onsubmit="submitForm(event, 'edit-material-stock', ${id})">
+                    <div class="input-group"><label>Material (Optional)</label>
+                        <select id="estock_mat_id" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="">None / General</option>
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Title / Description</label><div class="input-field"><input type="text" id="estock_title" required></div></div>
+                    <div class="input-group"><label>Amount (₹)</label><div class="input-field"><input type="number" step="0.01" id="estock_amount" required></div></div>
+                    <div class="input-group"><label>Type</label>
+                        <select id="estock_type" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="credit">Credit (Add Stock / Sale +)</option>
+                            <option value="debit">Debit (Purchase / Use -)</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Status</label>
+                        <select id="estock_status" class="input-field" style="width:100%; border:none; background:transparent;">
+                            <option value="success">SUCCESS</option>
+                            <option value="pending">PENDING</option>
+                            <option value="failed">FAILED</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Transaction</button>
+                </form>
+            `;
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/materials', { headers: getHeaders() });
+                    const json = await res.json();
+                    const select = document.getElementById('estock_mat_id');
+                    if (json.data && select) {
+                        json.data.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.textContent = `${m.name} (${m.unit})`;
+                            select.appendChild(opt);
+                        });
+                        // Select current option if loaded in edit
+                        if (window.currentStockMaterialId) {
+                            select.value = window.currentStockMaterialId;
+                        }
+                    }
+                } catch(e) {}
+            }, 100);
+        }
 
         modalBody.innerHTML = html;
     };

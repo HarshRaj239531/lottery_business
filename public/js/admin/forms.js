@@ -96,6 +96,44 @@
                 if(document.getElementById('ln_id_proof').files[0]) bodyData.append('id_proof', document.getElementById('ln_id_proof').files[0]);
                 if(document.getElementById('ln_aadhar').files[0]) bodyData.append('aadhar_card', document.getElementById('ln_aadhar').files[0]);
                 if(document.getElementById('ln_pan').files[0]) bodyData.append('pan_card', document.getElementById('ln_pan').files[0]);
+            } else if (entity === 'materials') {
+                endpoint = '/api/admin/materials';
+                bodyData = {
+                    name: document.getElementById('mat_name').value,
+                    price: document.getElementById('mat_price').value,
+                    unit: document.getElementById('mat_unit').value,
+                    image_url: document.getElementById('mat_image_url').value || null,
+                    status: document.getElementById('mat_status').value
+                };
+            } else if (entity === 'edit-material') {
+                endpoint = `/api/admin/materials/${id}`;
+                bodyData = {
+                    name: document.getElementById('emat_name').value,
+                    price: document.getElementById('emat_price').value,
+                    unit: document.getElementById('emat_unit').value,
+                    image_url: document.getElementById('emat_image_url').value || null,
+                    status: document.getElementById('emat_status').value
+                };
+            } else if (entity === 'material-stocks') {
+                endpoint = '/api/admin/material-stocks';
+                bodyData = {
+                    material_id: document.getElementById('stock_mat_id').value || null,
+                    user_id: document.getElementById('stock_user_id').value,
+                    title: document.getElementById('stock_title').value,
+                    amount: document.getElementById('stock_amount').value,
+                    type: document.getElementById('stock_type').value,
+                    status: document.getElementById('stock_status').value
+                };
+            } else if (entity === 'edit-material-stock') {
+                endpoint = `/api/admin/material-stocks/${id}`;
+                bodyData = {
+                    material_id: document.getElementById('estock_mat_id').value || null,
+                    user_id: document.getElementById('estock_user_id').value,
+                    title: document.getElementById('estock_title').value,
+                    amount: document.getElementById('estock_amount').value,
+                    type: document.getElementById('estock_type').value,
+                    status: document.getElementById('estock_status').value
+                };
             }
 
             let options = {
@@ -110,7 +148,7 @@
             }
 
             // Some entities define their own method
-            if (entity === 'edit-committee') options.method = 'PUT';
+            if (entity === 'edit-committee' || entity === 'edit-material' || entity === 'edit-material-stock') options.method = 'PUT';
 
             const res = await fetch(endpoint, options);
 

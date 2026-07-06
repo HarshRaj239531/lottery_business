@@ -14,6 +14,147 @@
     <!-- jQuery & DataTables -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0F4C3A;
+            --primary-dark: #0a3327;
+            --bg-glass: rgba(15, 76, 58, 0.45);
+        }
+        
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at top right, var(--primary-dark), #111827);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-sizing: border-box;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .login-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 10px 0;
+        }
+
+        .login-header p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            display: flex;
+            align-items: center;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 16px;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus-within {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.15);
+        }
+
+        .input-field i {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .input-field input {
+            border: none;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            color: #111827;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 
@@ -68,6 +209,7 @@
                 <li><a href="#loans" class="nav-link" data-view="loans"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Loans</span></a></li>
                 <li><a href="#collections" class="nav-link" data-view="collections"><i class="fa-solid fa-vault"></i> <span>Collections</span></a></li>
                 <li><a href="#payments" class="nav-link" data-view="payments"><i class="fa-solid fa-money-bill-transfer"></i> <span>Payments</span></a></li>
+                <li><a href="#materials" class="nav-link" data-view="materials"><i class="fa-solid fa-boxes-stacked"></i> <span>Materials</span></a></li>
                 <li><a href="#settings" class="nav-link" data-view="settings"><i class="fa-solid fa-sliders"></i> <span>Settings</span></a></li>
                 
                 <li class="nav-title" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="$('#accounting-submenu').slideToggle()">
@@ -134,6 +276,7 @@
                 @include('admin.pages.collections')
                 @include('admin.pages.payments')
                 @include('admin.pages.settings')
+                @include('admin.pages.materials')
             </div>
         </main>
     </div>
@@ -166,6 +309,7 @@
     <script src="/js/admin/balance_sheet_extra.js?v={{ time() }}"></script>
     <script src="/js/admin/agents.js?v={{ time() }}"></script>
     <script src="/js/admin/kyc_overview.js?v={{ time() }}"></script>
+    <script src="/js/admin/materials.js?v={{ time() }}"></script>
     <script src="/js/admin/init.js?v={{ time() }}"></script>
 </body>
 </html>

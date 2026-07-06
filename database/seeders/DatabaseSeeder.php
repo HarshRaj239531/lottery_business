@@ -18,19 +18,38 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        $user = User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => bcrypt('password') // Set a default password
-            ]
-        );
-
         Role::firstOrCreate(['name' => 'Super Admin']);
         Role::firstOrCreate(['name' => 'member']);
         Role::firstOrCreate(['name' => 'agent']);
 
-        $user->assignRole('Super Admin');
+        // Create Test User (Super Admin + member)
+        $user = User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+                'role' => 'admin'
+            ]
+        );
+        if (!$user->hasRole('Super Admin')) {
+            $user->assignRole('Super Admin');
+        }
+        if (!$user->hasRole('member')) {
+            $user->assignRole('member');
+        }
+
+        // Create Admin User (Super Admin)
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'role' => 'admin'
+            ]
+        );
+        if (!$admin->hasRole('Super Admin')) {
+            $admin->assignRole('Super Admin');
+        }
 
         // Create a fake agent
         $agent = User::firstOrCreate(
@@ -106,5 +125,70 @@ class DatabaseSeeder extends Seeder
                 'draw_date' => now()->subMonth()->format('Y-m-d'),
             ]);
         }
+
+        // Create 4 Materials (Cement, Concrete, Bricks, Steel)
+        $materialsData = [
+            [
+                'name' => 'Cement',
+                'price' => 385.00,
+                'unit' => 'kg',
+                'image_url' => 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=200&auto=format&fit=crop',
+                'status' => 'active'
+            ],
+            [
+                'name' => 'Concrete',
+                'price' => 4500.00,
+                'unit' => 'm³',
+                'image_url' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=200&auto=format&fit=crop',
+                'status' => 'active'
+            ],
+            [
+                'name' => 'Bricks',
+                'price' => 7.00,
+                'unit' => 'per brick',
+                'image_url' => 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop',
+                'status' => 'active'
+            ],
+            [
+                'name' => 'Steel',
+                'price' => 45.00,
+                'unit' => 'gm',
+                'image_url' => 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=200&auto=format&fit=crop',
+                'status' => 'active'
+            ]
+        ];
+
+        $materials = collect();
+        foreach ($materialsData as $mat) {
+            $materials->push(\App\Models\Material::create($mat));
+        }
+
+        // Create 3 Material Stocks (Cement, Concrete, Steel)
+        \App\Models\MaterialStock::create([
+            'material_id' => $materials->firstWhere('name', 'Cement')->id,
+            'user_id' => $user->id,
+            'title' => 'Cement Bulk Order #827',
+            'amount' => 24500.00,
+            'status' => 'success',
+            'type' => 'credit'
+        ]);
+
+        \App\Models\MaterialStock::create([
+            'material_id' => $materials->firstWhere('name', 'Concrete')->id,
+            'user_id' => $user->id,
+            'title' => 'Concrete Mixture Installment',
+            'amount' => 18200.00,
+            'status' => 'success',
+            'type' => 'credit'
+        ]);
+
+        \App\Models\MaterialStock::create([
+            'material_id' => $materials->firstWhere('name', 'Steel')->id,
+            'user_id' => $user->id,
+            'title' => 'Steel Rebar Purchase',
+            'amount' => 42000.00,
+            'status' => 'pending',
+            'type' => 'debit'
+        ]);
     }
 }
