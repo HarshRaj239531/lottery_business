@@ -1,0 +1,48 @@
+30: // ----- DARK MODE CONFIG -----
+54: // ----- SIDEBAR MINIMIZE CONFIG -----
+77: // ----- INITIALIZATION -----
+84: // ----- ROUTING (Simple Hash Router) -----
+85: function handleRoute() {
+139: // ----- UI TOGGLES -----
+140: function showApp() {
+146: function showLogin() {
+293: window.openEditCommitteeModal = async function(id) {
+308: window.deleteCommittee = async function(id) {
+328: // ----- FORM SUBMISSIONS -----
+329: window.submitForm = async function(e, entity, id = null) {
+477: window.sendDueWarnings = async function() {
+497: window.sendPaymentReminders = async function() {
+517: // ----- AUTHENTICATION -----
+553: // ----- DATA FETCHING -----
+554: async function loadDashboardData() {
+618: async function loadPaidMembersData() {
+641: async function loadDueMembersData() {
+665: async function loadPnLData() {
+691: async function loadBalanceSheetData() {
+771: async function loadCommitteesData(status = null) {
+830: async function loadMembersData() {
+926: window.submitChangePassword = async function(e) {
+957: window.impersonateMember = async function(id) {
+975: async function loadInstallmentsData() {
+1028: async function loadLoansData() {
+1064: window.toggleLoanDetails = async function(id) {
+1146: window.collectLoanInstallment = async function(installmentId, loanId) {
+1169: async function loadLotteriesData() {
+1198: async function loadPayoutsData() {
+1228: window.payPayout = async function(id) {
+1245: async function loadCollectionCommittees() {
+1267: async function loadCommitteeDetails(id) {
+1296: // ----- CHARTS (Chart.js) -----
+1297: function renderCharts(trends = null, distribution = null) {
+1395: async function loadBalanceSheetData() {
+1470: window.loadAgentsView = async function() {
+1538: window.approveCollection = async function(id) {
+1555: // ----- NEW FIGMA VIEWS BINDINGS & LOADERS -----
+1560: async function loadKycData() {
+1583: async function loadCollectionsOverviewData() {
+1654: function renderCollectionsCharts(weeklyTrends = null, methods = null) {
+1751: function loadSettingsData() {
+1756: async function loadAgentsList() {
+1814: window.approveCollectionFromOverview = async function(id) {
+1819: window.rejectCollectionFromOverview = async function(id) {
+1836: loadPayoutsData = async function() {
