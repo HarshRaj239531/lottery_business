@@ -210,6 +210,7 @@
                 <li><a href="#collections" class="nav-link" data-view="collections"><i class="fa-solid fa-vault"></i> <span>Collections</span></a></li>
                 <li><a href="#payments" class="nav-link" data-view="payments"><i class="fa-solid fa-money-bill-transfer"></i> <span>Payments</span></a></li>
                 <li><a href="#materials" class="nav-link" data-view="materials"><i class="fa-solid fa-boxes-stacked"></i> <span>Materials</span></a></li>
+                <li><a href="#terms" class="nav-link" data-view="terms"><i class="fa-solid fa-file-contract"></i> <span>Terms & Conditions</span></a></li>
                 <li><a href="#settings" class="nav-link" data-view="settings"><i class="fa-solid fa-sliders"></i> <span>Settings</span></a></li>
                 
                 <li class="nav-title" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="$('#accounting-submenu').slideToggle()">
@@ -277,6 +278,7 @@
                 @include('admin.pages.payments')
                 @include('admin.pages.settings')
                 @include('admin.pages.materials')
+                @include('admin.pages.terms')
             </div>
         </main>
     </div>
@@ -310,6 +312,7 @@
     <script src="/js/admin/agents.js?v={{ time() }}"></script>
     <script src="/js/admin/kyc_overview.js?v={{ time() }}"></script>
     <script src="/js/admin/materials.js?v={{ time() }}"></script>
+    <script src="/js/admin/terms.js?v={{ time() }}"></script>
     <script src="/js/admin/init.js?v={{ time() }}"></script>
 </body>
 </html>

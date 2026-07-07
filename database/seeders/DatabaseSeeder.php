@@ -76,10 +76,12 @@ class DatabaseSeeder extends Seeder
 
         // Create 3 Fake Committees
         $committees = collect();
+        $percentages = ['Gold Plan' => 12.5, 'Silver Plan' => 10.0, 'Bronze Plan' => 8.0];
         foreach (['Gold Plan', 'Silver Plan', 'Bronze Plan'] as $plan) {
             $committee = \App\Models\Committee::create([
                 'name' => $plan,
                 'amount' => $faker->randomElement([5000, 10000, 20000]),
+                'return_percentage' => $percentages[$plan],
                 'total_members' => 10,
                 'duration' => 10,
                 'payment_frequency' => 'monthly',
