@@ -15,7 +15,12 @@ class Committee extends Model
         'start_date',
         'end_date',
         'status',
-        'return_percentage'
+        'return_percentage',
+        'trending'
+    ];
+
+    protected $casts = [
+        'trending' => 'boolean',
     ];
 
     public function installments()

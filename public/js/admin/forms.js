@@ -22,7 +22,8 @@
                         return d.toISOString().split('T')[0];
                     })(),
                     return_percentage: document.getElementById('c_return').value || 0,
-                    status: 'active'
+                    status: 'active',
+                    trending: document.getElementById('c_trending').checked ? 1 : 0
                 };
             } else if (entity === 'edit-committee') {
                 endpoint = `/api/admin/committees/${id}`;
@@ -40,7 +41,8 @@
                         return d.toISOString().split('T')[0];
                     })(),
                     return_percentage: document.getElementById('ec_return').value || 0,
-                    status: document.getElementById('ec_status').value
+                    status: document.getElementById('ec_status').value,
+                    trending: document.getElementById('ec_trending').checked ? 1 : 0
                 };
             } else if (entity === 'members') {
                 endpoint = '/api/admin/users';

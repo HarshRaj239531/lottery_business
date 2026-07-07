@@ -29,6 +29,17 @@
                         </select>
                     </div>
                     <div class="input-group"><label>Return Percentage (%)</label><div class="input-field"><input type="number" step="0.01" min="0" max="100" id="c_return" placeholder="e.g. 10.50"></div></div>
+                    <div class="input-group" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--border-color); margin-top:8px;">
+                        <div>
+                            <label style="margin-bottom:2px; font-weight:700;"><i class="fa-solid fa-fire" style="color:#f59e0b; margin-right:4px;"></i> Mark as Trending</label>
+                            <p style="font-size:0.72rem; color:var(--text-muted); margin:0;">Show this committee prominently on the mobile app</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="c_trending">
+                            <span class="toggle-track"></span>
+                            <span class="toggle-knob"></span>
+                        </label>
+                    </div>
                     <button type="submit" class="btn-primary">Create Committee</button>
                 </form>
             `;
@@ -94,6 +105,17 @@
                             <option value="completed">Completed</option>
                             <option value="defaulted">Defaulted</option>
                         </select>
+                    </div>
+                    <div class="input-group" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--border-color); margin-top:8px;">
+                        <div>
+                            <label style="margin-bottom:2px; font-weight:700;"><i class="fa-solid fa-fire" style="color:#f59e0b; margin-right:4px;"></i> Mark as Trending</label>
+                            <p style="font-size:0.72rem; color:var(--text-muted); margin:0;">Show this committee prominently on the mobile app</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ec_trending">
+                            <span class="toggle-track"></span>
+                            <span class="toggle-knob"></span>
+                        </label>
                     </div>
                     <button type="submit" class="btn-primary">Update Committee</button>
                 </form>
@@ -305,6 +327,7 @@
             document.getElementById('ec_freq').value = data.payment_frequency;
             document.getElementById('ec_return').value = data.return_percentage || '';
             document.getElementById('ec_status').value = data.status;
+            document.getElementById('ec_trending').checked = data.trending == 1 || data.trending === true;
         } catch (err) { console.error("Error fetching committee:", err); }
     };
 
