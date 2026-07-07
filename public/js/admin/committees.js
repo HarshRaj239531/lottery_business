@@ -6,9 +6,16 @@
             const res = await fetch(url, { headers: getHeaders() });
             const data = await res.json();
             const tbody = document.getElementById('committees-tbody');
+            const committees = Array.isArray(data?.data?.data)
+                ? data.data.data
+                : (Array.isArray(data?.data)
+                    ? data.data
+                    : (Array.isArray(data)
+                        ? data
+                        : []));
             tbody.innerHTML = '';
-            if(Array.isArray(data)) {
-                data.forEach(c => {
+            if (committees.length > 0) {
+                committees.forEach(c => {
                     tbody.innerHTML += `
                         <tr>
                             <td>#${c.id}</td>
@@ -26,6 +33,8 @@
                         </tr>
                     `;
                 });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No committees found.</td></tr>';
             }
         } catch (err) { console.error(err); }
     }
