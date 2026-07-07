@@ -202,7 +202,7 @@
             
             <ul class="nav-menu">
                 <li class="nav-title">Finance Core</li>
-                <li><a href="#dashboard" class="nav-link active" data-view="dashboard"><i class="fa-solid fa-grid-2"></i> <span>Dashboard</span></a></li>
+                <li><a href="#dashboard" class="nav-link active" data-view="dashboard"><i class="fa-solid fa-gauge"></i> <span>Dashboard</span></a></li>
                 <li><a href="#members" class="nav-link" data-view="members"><i class="fa-solid fa-user-group"></i> <span>Members</span></a></li>
                 <li><a href="#agents" class="nav-link" data-view="agents"><i class="fa-solid fa-user-tie"></i> <span>Agents</span></a></li>
                 <li><a href="#kyc" class="nav-link" data-view="kyc"><i class="fa-solid fa-shield-heart"></i> <span>KYC</span></a></li>
