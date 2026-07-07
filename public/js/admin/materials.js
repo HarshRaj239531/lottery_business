@@ -100,7 +100,6 @@
                 document.getElementById('emat_name').value = json.data.name;
                 document.getElementById('emat_price').value = json.data.price;
                 document.getElementById('emat_unit').value = json.data.unit;
-                document.getElementById('emat_image_url').value = json.data.image_url || '';
                 document.getElementById('emat_status').value = json.data.status;
             } else {
                 alert('Error fetching material details: ' + (json.message || 'Error'));

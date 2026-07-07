@@ -147,11 +147,17 @@
         else if (type === 'create-material') {
             modalTitle.textContent = 'New Material';
             html = `
-                <form id="modal-form" onsubmit="submitForm(event, 'materials')">
+                <form id="modal-form" onsubmit="submitForm(event, 'materials')" enctype="multipart/form-data">
                     <div class="input-group"><label>Name</label><div class="input-field"><input type="text" id="mat_name" required></div></div>
                     <div class="input-group"><label>Price (₹)</label><div class="input-field"><input type="number" step="0.01" id="mat_price" required></div></div>
                     <div class="input-group"><label>Unit</label><div class="input-field"><input type="text" id="mat_unit" required placeholder="e.g. kg, m³, per brick, gm"></div></div>
-                    <div class="input-group"><label>Image URL</label><div class="input-field"><input type="text" id="mat_image_url"></div></div>
+                    <div class="input-group">
+                        <label>Image File</label>
+                        <div class="input-field">
+                            <input type="file" id="mat_image" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="input-group"><label>Or Image URL</label><div class="input-field"><input type="text" id="mat_image_url" placeholder="https://example.com/image.jpg"></div></div>
                     <div class="input-group"><label>Status</label>
                         <select id="mat_status" class="input-field" style="width:100%; border:none; background:transparent;">
                             <option value="active" selected>Active</option>
@@ -165,11 +171,17 @@
         else if (type === 'edit-material') {
             modalTitle.textContent = 'Edit Material #' + id;
             html = `
-                <form id="modal-form" onsubmit="submitForm(event, 'edit-material', ${id})">
+                <form id="modal-form" onsubmit="submitForm(event, 'edit-material', ${id})" enctype="multipart/form-data">
                     <div class="input-group"><label>Name</label><div class="input-field"><input type="text" id="emat_name" required></div></div>
                     <div class="input-group"><label>Price (₹)</label><div class="input-field"><input type="number" step="0.01" id="emat_price" required></div></div>
                     <div class="input-group"><label>Unit</label><div class="input-field"><input type="text" id="emat_unit" required></div></div>
-                    <div class="input-group"><label>Image URL</label><div class="input-field"><input type="text" id="emat_image_url"></div></div>
+                    <div class="input-group">
+                        <label>Image File</label>
+                        <div class="input-field">
+                            <input type="file" id="emat_image" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="input-group"><label>Or Image URL</label><div class="input-field"><input type="text" id="emat_image_url" placeholder="https://example.com/image.jpg"></div></div>
                     <div class="input-group"><label>Status</label>
                         <select id="emat_status" class="input-field" style="width:100%; border:none; background:transparent;">
                             <option value="active">Active</option>
