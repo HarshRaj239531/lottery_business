@@ -175,4 +175,64 @@ class LoanController extends Controller
             return ApiResponse::error('Failed', 500);
         }
     }
+
+    public function index(Request $request)
+    {
+        if (!$request->user()->hasRole('Super Admin')) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
+
+        $loans = Loan::with('user')->latest()->get();
+
+        return ApiResponse::success($loans, 'Loans retrieved successfully');
+    }
+
+    public function show(Request $request, $id)
+    {
+        if (!$request->user()->hasRole('Super Admin')) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
+
+        $loan = Loan::with(['user', 'installments'])->findOrFail($id);
+
+        return ApiResponse::success($loan, 'Loan retrieved successfully');
+    }
+
+    public function installments(Request $request)
+    {
+        if (!$request->user()->hasRole('Super Admin')) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
+
+        $installments = LoanInstallment::with(['loan.user'])->latest()->get();
+
+        return ApiResponse::success($installments, 'Installments retrieved successfully');
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        if (!$request->user()->hasRole('Super Admin')) {
+            return ApiResponse::error('Unauthorized', 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $loan = Loan::findOrFail($id);
+
+            // Delete all associated installments first
+            $loan->installments()->delete();
+
+            // Delete the loan
+            $loan->delete();
+
+            DB::commit();
+
+            return ApiResponse::success(null, 'Loan and its installments deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ApiResponse::error('Failed to delete loan: ' . $e->getMessage(), 500);
+        }
+    }
 }

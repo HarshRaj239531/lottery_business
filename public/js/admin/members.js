@@ -13,7 +13,13 @@
             tbodyLoan.innerHTML = '';
             
             // Check if response is paginated (data.data) or a flat array (data)
-            const membersList = Array.isArray(data) ? data : (data.data ? data.data : []);
+            const membersList = Array.isArray(data?.data?.data)
+                ? data.data.data
+                : (Array.isArray(data?.data)
+                    ? data.data
+                    : (Array.isArray(data)
+                        ? data
+                        : []));
             
             if(membersList.length > 0) {
                 membersList.forEach(m => {

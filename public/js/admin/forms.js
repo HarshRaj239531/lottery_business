@@ -85,19 +85,29 @@
             } else if (entity === 'loans') {
                 endpoint = '/api/admin/loans';
                 bodyData = new FormData();
-                bodyData.append('name', document.getElementById('ln_name').value);
-                bodyData.append('email', document.getElementById('ln_email').value);
-                bodyData.append('phone', document.getElementById('ln_phone').value);
-                bodyData.append('password', document.getElementById('ln_pass').value);
-                bodyData.append('address', document.getElementById('ln_address').value);
+                const userType = document.getElementById('ln_user_type').value;
+                if (userType === 'existing') {
+                    const userId = document.getElementById('ln_user_id').value;
+                    if (!userId) {
+                        alert('Please select a member first');
+                        return;
+                    }
+                    bodyData.append('user_id', userId);
+                } else {
+                    bodyData.append('name', document.getElementById('ln_name').value);
+                    bodyData.append('email', document.getElementById('ln_email').value);
+                    bodyData.append('phone', document.getElementById('ln_phone').value);
+                    bodyData.append('password', document.getElementById('ln_pass').value);
+                    bodyData.append('address', document.getElementById('ln_address').value);
+                    if(document.getElementById('ln_photo').files[0]) bodyData.append('photo', document.getElementById('ln_photo').files[0]);
+                    if(document.getElementById('ln_id_proof').files[0]) bodyData.append('id_proof', document.getElementById('ln_id_proof').files[0]);
+                    if(document.getElementById('ln_aadhar').files[0]) bodyData.append('aadhar_card', document.getElementById('ln_aadhar').files[0]);
+                    if(document.getElementById('ln_pan').files[0]) bodyData.append('pan_card', document.getElementById('ln_pan').files[0]);
+                }
                 bodyData.append('amount', document.getElementById('ln_amount').value);
                 bodyData.append('interest_rate_percent', document.getElementById('ln_rate').value);
                 bodyData.append('duration_months', document.getElementById('ln_duration').value);
                 bodyData.append('payment_frequency', document.getElementById('ln_freq').value);
-                if(document.getElementById('ln_photo').files[0]) bodyData.append('photo', document.getElementById('ln_photo').files[0]);
-                if(document.getElementById('ln_id_proof').files[0]) bodyData.append('id_proof', document.getElementById('ln_id_proof').files[0]);
-                if(document.getElementById('ln_aadhar').files[0]) bodyData.append('aadhar_card', document.getElementById('ln_aadhar').files[0]);
-                if(document.getElementById('ln_pan').files[0]) bodyData.append('pan_card', document.getElementById('ln_pan').files[0]);
             } else if (entity === 'materials') {
                 endpoint = '/api/admin/materials';
                 bodyData = new FormData();

@@ -138,17 +138,36 @@
                     <div class="flex-wrap-gap">
                         <div class="flex-1">
                             <h3 style="margin-bottom:10px; font-size:1rem;">Borrower Details</h3>
-                            <div class="input-group"><label>Full Name</label><div class="input-field"><input type="text" id="ln_name"></div></div>
-                            <div class="input-group"><label>Email</label><div class="input-field"><input type="email" id="ln_email"></div></div>
-                            <div class="input-group"><label>Phone</label><div class="input-field"><input type="text" id="ln_phone"></div></div>
-                            <div class="input-group"><label>Password (For new user)</label><div class="input-field"><input type="password" id="ln_pass"></div></div>
-                            <div class="input-group"><label>Address</label><div class="input-field"><input type="text" id="ln_address"></div></div>
+                            <div class="input-group">
+                                <label>Borrower Type</label>
+                                <select id="ln_user_type" class="input-field" style="width:100%; border:none; background:transparent;" onchange="toggleBorrowerFields()">
+                                    <option value="existing" selected>Existing Member</option>
+                                    <option value="new">Create New Member</option>
+                                </select>
+                            </div>
                             
-                            <h3 style="margin-top:15px; margin-bottom:10px; font-size:1rem;">KYC Documents</h3>
-                            <div class="input-group"><label>Photo</label><div class="input-field"><input type="file" id="ln_photo" accept="image/*"></div></div>
-                            <div class="input-group"><label>ID Proof</label><div class="input-field"><input type="file" id="ln_id_proof" accept=".jpg,.png,.pdf"></div></div>
-                            <div class="input-group"><label>Aadhar Card</label><div class="input-field"><input type="file" id="ln_aadhar" accept=".jpg,.png,.pdf"></div></div>
-                            <div class="input-group"><label>PAN Card</label><div class="input-field"><input type="file" id="ln_pan" accept=".jpg,.png,.pdf"></div></div>
+                            <!-- Existing User Select -->
+                            <div class="input-group" id="ln_existing_user_group">
+                                <label>Select User</label>
+                                <select id="ln_user_id" class="input-field" style="width:100%; border:none; background:transparent;" required>
+                                    <option value="">Loading members...</option>
+                                </select>
+                            </div>
+
+                            <!-- New User Fields (hidden by default) -->
+                            <div id="ln_new_user_fields" style="display:none;">
+                                <div class="input-group"><label>Full Name</label><div class="input-field"><input type="text" id="ln_name"></div></div>
+                                <div class="input-group"><label>Email</label><div class="input-field"><input type="email" id="ln_email"></div></div>
+                                <div class="input-group"><label>Phone</label><div class="input-field"><input type="text" id="ln_phone"></div></div>
+                                <div class="input-group"><label>Password</label><div class="input-field"><input type="password" id="ln_pass"></div></div>
+                                <div class="input-group"><label>Address</label><div class="input-field"><input type="text" id="ln_address"></div></div>
+                                
+                                <h3 style="margin-top:15px; margin-bottom:10px; font-size:1rem;">KYC Documents</h3>
+                                <div class="input-group"><label>Photo</label><div class="input-field"><input type="file" id="ln_photo" accept="image/*"></div></div>
+                                <div class="input-group"><label>ID Proof</label><div class="input-field"><input type="file" id="ln_id_proof" accept=".jpg,.png,.pdf"></div></div>
+                                <div class="input-group"><label>Aadhar Card</label><div class="input-field"><input type="file" id="ln_aadhar" accept=".jpg,.png,.pdf"></div></div>
+                                <div class="input-group"><label>PAN Card</label><div class="input-field"><input type="file" id="ln_pan" accept=".jpg,.png,.pdf"></div></div>
+                            </div>
                         </div>
                         <div class="flex-1">
                             <h3 style="margin-bottom:10px; font-size:1rem;">Loan Terms</h3>
@@ -165,6 +184,62 @@
                     <button type="submit" class="btn-primary" style="margin-top:20px; width:100%;">Create Loan & Generate EMIs</button>
                 </form>
             `;
+
+            window.toggleBorrowerFields = function() {
+                const userType = document.getElementById('ln_user_type').value;
+                const existingGroup = document.getElementById('ln_existing_user_group');
+                const newFields = document.getElementById('ln_new_user_fields');
+                const existingSelect = document.getElementById('ln_user_id');
+                
+                const newFieldsIds = ['ln_name', 'ln_email', 'ln_phone', 'ln_pass', 'ln_address'];
+                
+                if (userType === 'existing') {
+                    existingGroup.style.display = 'block';
+                    newFields.style.display = 'none';
+                    if (existingSelect) existingSelect.required = true;
+                    newFieldsIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.required = false;
+                    });
+                } else {
+                    existingGroup.style.display = 'none';
+                    newFields.style.display = 'block';
+                    if (existingSelect) existingSelect.required = false;
+                    newFieldsIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.required = true;
+                    });
+                }
+            };
+
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/members', { headers: getHeaders() });
+                    const data = await res.json();
+                    const membersList = Array.isArray(data?.data?.data)
+                        ? data.data.data
+                        : (Array.isArray(data?.data)
+                            ? data.data
+                            : (Array.isArray(data)
+                                ? data
+                                : []));
+                    const select = document.getElementById('ln_user_id');
+                    if (select) {
+                        select.innerHTML = '<option value="">-- Select Member --</option>';
+                        membersList.forEach(m => {
+                            const isAgent = m.roles && m.roles.some(r => r.name === 'agent');
+                            if (!isAgent) {
+                                const opt = document.createElement('option');
+                                opt.value = m.id;
+                                opt.textContent = `${m.name} (#${m.id}) - ${m.email}`;
+                                select.appendChild(opt);
+                            }
+                        });
+                    }
+                } catch(e) {
+                    console.error("Error loading members:", e);
+                }
+            }, 100);
         }
         else if (type === 'create-material') {
             modalTitle.textContent = 'New Material';

@@ -12,7 +12,13 @@
             if (!select) return;
 
             select.innerHTML = '<option value="">-- Choose Member / Agent --</option>';
-            const membersList = Array.isArray(data) ? data : (data.data ? data.data : []);
+            const membersList = Array.isArray(data?.data?.data)
+                ? data.data.data
+                : (Array.isArray(data?.data)
+                    ? data.data
+                    : (Array.isArray(data)
+                        ? data
+                        : []));
             if (membersList.length > 0) {
                 membersList.forEach(m => {
                     const roleText = m.roles && m.roles.some(r => r.name === 'agent') ? 'Agent' : 'Member';
@@ -208,7 +214,13 @@
             if (!tbody) return;
 
             tbody.innerHTML = '';
-            const membersList = Array.isArray(data) ? data : (data.data ? data.data : []);
+            const membersList = Array.isArray(data?.data?.data)
+                ? data.data.data
+                : (Array.isArray(data?.data)
+                    ? data.data
+                    : (Array.isArray(data)
+                        ? data
+                        : []));
             const agents = membersList.filter(m => m.roles && m.roles.some(r => r.name === 'agent'));
 
             if (agents.length > 0) {

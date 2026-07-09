@@ -19,7 +19,10 @@
                             <td style="text-transform:capitalize;">${l.payment_frequency}</td>
                             <td><span style="color:${l.status === 'active' ? '#3b82f6' : '#10b981'}"><i class="fa-solid fa-circle text-sm"></i> ${l.status}</span></td>
                             <td>
-                                <button class="btn-primary" onclick="toggleLoanDetails(${l.id})" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-chevron-down"></i> Installments</button>
+                                <div style="display: flex; gap: 8px; align-items: center; white-space: nowrap;">
+                                    <button class="btn-primary" onclick="toggleLoanDetails(${l.id})" style="padding:4px 8px; font-size:0.8rem; margin:0;"><i class="fa-solid fa-chevron-down"></i> Installments</button>
+                                    <button class="btn-secondary text-danger" onclick="deleteLoan(${l.id})" style="padding:4px 8px; font-size:0.8rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); margin:0;"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                                </div>
                             </td>
                         </tr>
                         <tr id="loan-details-${l.id}" style="display:none; background: rgba(0,0,0,0.02);">
@@ -137,5 +140,26 @@
         } catch (err) {
             console.error(err);
             alert('Failed to collect payment');
+        }
+    };
+
+    window.deleteLoan = async function(id) {
+        if (!confirm("Are you sure you want to delete this loan? This will delete all its installments as well. This action cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/admin/loans/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Success: ' + (data.message || 'Loan deleted successfully'));
+                loadLoansData();
+                if (typeof loadBalanceSheetData === 'function') loadBalanceSheetData();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to delete loan'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Request failed');
         }
     };
