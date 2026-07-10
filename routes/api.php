@@ -104,6 +104,7 @@ Route::prefix('user')->group(function () {
         // 🏆 Lottery
         Route::get('/lotteries/winners', [\App\Http\Controllers\User\LotteryController::class, 'winners']);
         Route::get('/lotteries/history', [\App\Http\Controllers\User\LotteryController::class, 'history']);
+        Route::get('/lotteries/setting', [\App\Http\Controllers\User\LotteryController::class, 'showSettings']);
 
         // 💸 Payments
         Route::post('/payments/pay', [\App\Http\Controllers\User\PaymentController::class, 'pay']);
@@ -179,7 +180,10 @@ Route::prefix('admin')->group(function () {
 
         // 🎯 Lottery
         Route::post('/lotteries/draw/{committee_id}', [LotteryController::class, 'draw']);
-        Route::apiResource('lotteries', LotteryController::class)->except(['store', 'update']);
+        Route::post('/lotteries/manual-draw', [LotteryController::class, 'manualDraw']);
+        Route::get('/lotteries/setting', [LotteryController::class, 'showSettings']);
+        Route::post('/lotteries/setting', [LotteryController::class, 'updateSettings']);
+        Route::apiResource('lotteries', LotteryController::class)->except(['store']);
 
         // 📈 Reports
         Route::get('/reports/collection', [ReportController::class, 'collectionReport']);

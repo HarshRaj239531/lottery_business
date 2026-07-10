@@ -1,29 +1,102 @@
 
+    async function loadLotterySettingsData() {
+        try {
+            const res = await fetch('/api/admin/lotteries/setting', { headers: getHeaders() });
+            const payload = await res.json();
+            if (payload.status && payload.data) {
+                const data = payload.data;
+                const titleInput = document.getElementById('grand_draw_title');
+                const dateInput = document.getElementById('grand_draw_date');
+                const descInput = document.getElementById('grand_draw_description');
+                
+                if (titleInput) titleInput.value = data.grand_draw_title || '';
+                if (dateInput && data.grand_draw_date) {
+                    const dateStr = data.grand_draw_date.replace(' ', 'T').substring(0, 16);
+                    dateInput.value = dateStr;
+                }
+                if (descInput) descInput.value = data.grand_draw_description || '';
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    window.saveLotterySettings = async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = {
+            grand_draw_title: formData.get('grand_draw_title'),
+            grand_draw_date: formData.get('grand_draw_date'),
+            grand_draw_description: formData.get('grand_draw_description')
+        };
+        
+        try {
+            const res = await fetch('/api/admin/lotteries/setting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                },
+                body: JSON.stringify(data)
+            });
+            const payload = await res.json();
+            if (payload.status) {
+                alert('Lottery settings saved successfully!');
+                loadLotterySettingsData();
+            } else {
+                alert('Error saving settings: ' + (payload.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save settings.');
+        }
+    };
+
     async function loadLotteriesData() {
+        loadLotterySettingsData();
+        const winnerDateInput = document.getElementById('winner_draw_date');
+        if (winnerDateInput && !winnerDateInput.value) {
+            winnerDateInput.value = new Date().toISOString().split('T')[0];
+        }
         try {
             const res = await fetch('/api/admin/lotteries', { headers: getHeaders() });
             const payload = await res.json();
             const data = payload.data || [];
-            const container = document.getElementById('lotteries-container');
-            container.innerHTML = '';
+            const tbody = document.getElementById('lotteries-tbody');
+            tbody.innerHTML = '';
             
             if(Array.isArray(data) && data.length > 0) {
                 data.forEach(l => {
                     const commName = l.committee ? l.committee.name : 'N/A';
+                    const commId = l.committee_id || '';
                     const winnerName = l.winner ? l.winner.name : 'Unknown';
-                    container.innerHTML += `
-                        <div class="card" style="border-left: 4px solid #8b5cf6; padding: 20px;">
-                            <div class="flex-between">
-                                <span style="font-size: 0.8rem; color:#888;">ID: #${l.id}</span>
-                                <span style="font-size: 0.8rem; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 2px 8px; border-radius: 12px;"><i class="fa-solid fa-calendar-day"></i> ${l.draw_date}</span>
-                            </div>
-                            <h3 style="margin: 0 0 5px 0; font-size: 1.1rem; color:#333;">${winnerName} <i class="fa-solid fa-trophy" class="text-warning"></i></h3>
-                            <p class="text-muted">Committee: <strong>${commName}</strong></p>
-                        </div>
+                    const winnerId = l.winner_id || '';
+                    const winnerPhoto = l.winner && l.winner.photo ? l.winner.photo : '';
+                    
+                    const avatarHtml = winnerPhoto 
+                        ? `<img src="${winnerPhoto}" style="width:28px; height:28px; border-radius:50%; object-fit:cover; margin-right:8px; vertical-align:middle;">`
+                        : `<div style="width:28px; height:28px; border-radius:50%; background:#e2e8f0; color:#64748b; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-right:8px; vertical-align:middle; font-size:11px;">${winnerName.substring(0, 1).toUpperCase()}</div>`;
+                    
+                    const prizePool = l.prize_amount ? `₹${parseFloat(l.prize_amount).toLocaleString('en-IN')}` : '₹0';
+                    
+                    tbody.innerHTML += `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:12px 16px; font-size:13px; color:#64748b;">#${l.id}</td>
+                            <td style="padding:12px 16px; font-size:13px; font-weight:600; color:#1e293b;">
+                                ${avatarHtml}
+                                <span>${winnerName} <small style="color:#64748b; font-weight:normal;">(ID: ${winnerId})</small></span>
+                            </td>
+                            <td style="padding:12px 16px; font-size:13px; color:#334155;"><strong>${commName}</strong> <small style="color:#64748b;">(ID: ${commId})</small></td>
+                            <td style="padding:12px 16px; font-size:13px; font-weight:700; color:#10b981;">${prizePool}</td>
+                            <td style="padding:12px 16px; font-size:13px; color:#64748b;">${l.draw_date}</td>
+                            <td style="padding:12px 16px; text-align:right;">
+                                <button class="btn-secondary" onclick="editLotteryWinner(${l.id}, ${commId}, ${winnerId}, '${l.draw_date}')" style="padding:4px 8px; font-size:0.75rem; border:1px solid #cbd5e1; background:white; cursor:pointer; border-radius:4px; margin-right:5px; transition:all 0.2s;"><i class="fa-solid fa-pen" style="color:#3b82f6;"></i> Edit</button>
+                                <button class="btn-secondary" onclick="deleteLotteryWinner(${l.id})" style="padding:4px 8px; font-size:0.75rem; border:1px solid #fecaca; background:white; cursor:pointer; border-radius:4px; transition:all 0.2s;"><i class="fa-solid fa-trash" style="color:#ef4444;"></i> Delete</button>
+                            </td>
+                        </tr>
                     `;
                 });
             } else {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888; background: white; border-radius: 12px;">No lottery winners yet.</div>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: #888; background: white;">No lottery winners yet.</td></tr>`;
             }
         } catch (err) { console.error(err); }
     }
@@ -123,4 +196,126 @@
                 alert('Error: ' + data.message);
             }
         } catch (err) { console.error(err); alert('Failed to process payout.'); }
+    };
+
+    window.addLotteryWinner = async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = {
+            committee_id: formData.get('committee_id'),
+            winner_id: formData.get('winner_id'),
+            draw_date: formData.get('draw_date')
+        };
+
+        const isEditing = !!window.editingLotteryId;
+        const url = isEditing 
+            ? `/api/admin/lotteries/${window.editingLotteryId}` 
+            : '/api/admin/lotteries/manual-draw';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                },
+                body: JSON.stringify(data)
+            });
+            const payload = await res.json();
+            if (payload.status) {
+                alert(isEditing ? 'Lottery winner updated successfully!' : 'Lottery winner added successfully!');
+                cancelLotteryEdit();
+                loadLotteriesData();
+            } else {
+                alert('Error processing request: ' + (payload.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save winner details.');
+        }
+    };
+
+    window.editLotteryWinner = function(id, committeeId, winnerId, drawDate) {
+        window.editingLotteryId = id;
+        const titleEl = document.querySelector('#add-lottery-winner-form').previousElementSibling;
+        if (titleEl) titleEl.textContent = `Edit Lottery Winner #${id}`;
+        
+        document.getElementById('winner_committee_id').value = committeeId;
+        document.getElementById('winner_user_id').value = winnerId;
+        document.getElementById('winner_draw_date').value = drawDate;
+        
+        const btn = document.querySelector('#add-lottery-winner-form button[type="submit"]');
+        if (btn) {
+            btn.innerHTML = 'Update Winner <i class="fa-solid fa-save"></i>';
+            btn.style.background = '#0ea5e9';
+        }
+        
+        let cancelBtn = document.getElementById('cancel-edit-btn');
+        if (!cancelBtn) {
+            cancelBtn = document.createElement('button');
+            cancelBtn.id = 'cancel-edit-btn';
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-secondary';
+            cancelBtn.style.marginRight = '8px';
+            cancelBtn.style.background = '#64748b';
+            cancelBtn.style.color = 'white';
+            cancelBtn.style.border = 'none';
+            cancelBtn.style.padding = '10px 20px';
+            cancelBtn.style.borderRadius = '6px';
+            cancelBtn.style.fontWeight = '600';
+            cancelBtn.style.cursor = 'pointer';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = function() {
+                cancelLotteryEdit();
+            };
+            btn.parentNode.insertBefore(cancelBtn, btn);
+        }
+    };
+
+    window.cancelLotteryEdit = function() {
+        window.editingLotteryId = null;
+        const titleEl = document.querySelector('#add-lottery-winner-form').previousElementSibling;
+        if (titleEl) titleEl.textContent = 'Add New Lottery Winner';
+        
+        const form = document.getElementById('add-lottery-winner-form');
+        if (form) form.reset();
+        
+        const dateInput = document.getElementById('winner_draw_date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        const btn = document.querySelector('#add-lottery-winner-form button[type="submit"]');
+        if (btn) {
+            btn.innerHTML = 'Add Winner';
+            btn.style.background = '#8b5cf6';
+        }
+        
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        if (cancelBtn) cancelBtn.remove();
+    };
+
+    window.deleteLotteryWinner = async function(id) {
+        if (!confirm('Are you sure you want to delete this lottery winner?')) return;
+        try {
+            const res = await fetch(`/api/admin/lotteries/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            const payload = await res.json();
+            if (payload.status) {
+                alert('Lottery winner deleted successfully!');
+                if (window.editingLotteryId === id) {
+                    cancelLotteryEdit();
+                }
+                loadLotteriesData();
+            } else {
+                alert('Error deleting winner: ' + (payload.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to delete winner.');
+        }
     };

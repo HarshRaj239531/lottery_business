@@ -126,7 +126,9 @@
             html = `
                 <form id="modal-form" onsubmit="submitForm(event, 'lotteries')">
                     <div class="input-group"><label>Committee ID</label><div class="input-field"><input type="number" id="l_comm" required></div></div>
-                    <button type="submit" class="btn-primary">Draw Winner Now <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                    <div class="input-group"><label>Winner (User) ID</label><div class="input-field"><input type="number" id="l_winner" required></div></div>
+                    <div class="input-group"><label>Draw Date</label><div class="input-field"><input type="date" id="l_draw_date" required value="${new Date().toISOString().split('T')[0]}"></div></div>
+                    <button type="submit" class="btn-primary">Save Draw Winner <i class="fa-solid fa-save"></i></button>
                 </form>
             `;
         }

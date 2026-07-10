@@ -65,9 +65,12 @@
                     status: 'paid'
                 };
             } else if (entity === 'lotteries') {
-                const commId = document.getElementById('l_comm').value;
-                endpoint = `/api/admin/lotteries/draw/${commId}`;
-                bodyData = {};
+                endpoint = '/api/admin/lotteries/manual-draw';
+                bodyData = {
+                    committee_id: document.getElementById('l_comm').value,
+                    winner_id: document.getElementById('l_winner').value,
+                    draw_date: document.getElementById('l_draw_date').value
+                };
             } else if (entity === 'enroll-member') {
                 endpoint = `/api/admin/members/${id}/enroll`;
                 bodyData = {

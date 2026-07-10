@@ -95,10 +95,77 @@
 
                 <!-- Lotteries View -->
                 <section id="view-lotteries" class="content-section view-section" style="display:none;">
+                    <!-- Grid for Settings and Add Winner -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                        
+                        <!-- Lottery Settings Panel -->
+                        <div class="card" style="background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0;">
+                            <h3 style="margin-top:0; margin-bottom:16px; font-weight: 600; color: #1e293b;">Grand Draw Countdown Settings</h3>
+                            <form id="lottery-settings-form" onsubmit="saveLotterySettings(event)">
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Grand Draw Title</label>
+                                    <input type="text" id="grand_draw_title" name="grand_draw_title" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;" placeholder="e.g. The Wealth Multiplier">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Grand Draw Date & Time</label>
+                                    <input type="datetime-local" id="grand_draw_date" name="grand_draw_date" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Grand Draw Description</label>
+                                    <textarea id="grand_draw_description" name="grand_draw_description" required rows="3" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; resize:none;" placeholder="e.g. Join the elite circle of participants..."></textarea>
+                                </div>
+                                <div style="text-align: right;">
+                                    <button type="submit" class="btn-primary" style="background:#10b981; border:none; padding:10px 20px; color:white; border-radius:6px; font-weight:600; cursor:pointer;">
+                                        Save Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Add Lottery Winner Panel -->
+                        <div class="card" style="background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0;">
+                            <h3 style="margin-top:0; margin-bottom:16px; font-weight: 600; color: #1e293b;">Add New Lottery Winner</h3>
+                            <form id="add-lottery-winner-form" onsubmit="addLotteryWinner(event)">
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Committee ID</label>
+                                    <input type="number" id="winner_committee_id" name="committee_id" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;" placeholder="Enter Committee ID">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Winner (User) ID</label>
+                                    <input type="number" id="winner_user_id" name="winner_id" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;" placeholder="Enter Winner User ID">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Draw Date</label>
+                                    <input type="date" id="winner_draw_date" name="draw_date" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
+                                </div>
+                                <div style="text-align: right;">
+                                    <button type="submit" class="btn-primary" style="background:#8b5cf6; border:none; padding:10px 20px; color:white; border-radius:6px; font-weight:600; cursor:pointer;">
+                                        Add Winner
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                         <h2>Lottery Winners</h2>
                     </div>
-                    <div id="lotteries-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                        <!-- Cards will be injected here by admin.js -->
+                    <div class="card" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; padding: 0;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">ID</th>
+                                    <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">Winner User</th>
+                                    <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">Committee</th>
+                                    <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">Prize Pool</th>
+                                    <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">Draw Date</th>
+                                    <th style="padding: 14px 16px; text-align: right; font-size: 11px; font-weight: 600; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lotteries-tbody">
+                                <!-- Rows will be injected here by lotteries_payouts.js -->
+                            </tbody>
+                        </table>
                     </div>
                 </section>

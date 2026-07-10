@@ -29,4 +29,16 @@ class LotteryController extends Controller
 
         return ApiResponse::success($history, 'Lottery history fetched');
     }
+
+    // ⚙️ Show Settings
+    public function showSettings()
+    {
+        $setting = \App\Models\LotterySetting::first() ?? new \App\Models\LotterySetting([
+            'grand_draw_title' => 'The Wealth Multiplier',
+            'grand_draw_description' => 'Join the elite circle of participants...',
+            'grand_draw_date' => now()->addDays(2)->toDateTimeString()
+        ]);
+        
+        return ApiResponse::success($setting, 'Lottery settings fetched');
+    }
 }

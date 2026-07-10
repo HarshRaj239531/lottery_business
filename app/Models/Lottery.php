@@ -12,6 +12,16 @@ class Lottery extends Model
         'draw_date'
     ];
 
+    protected $appends = ['prize_amount'];
+
+    public function getPrizeAmountAttribute()
+    {
+        if ($this->committee) {
+            return $this->committee->amount * $this->committee->total_members;
+        }
+        return 0;
+    }
+
     public function committee()
     {
         return $this->belongsTo(Committee::class);
