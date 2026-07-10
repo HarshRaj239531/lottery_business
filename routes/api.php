@@ -81,6 +81,7 @@ Route::prefix('user')->group(function () {
         Route::get('/vault', [\App\Http\Controllers\User\ProfileController::class, 'vault']);
         Route::post('/vault/upload', [\App\Http\Controllers\User\ProfileController::class, 'uploadVault']);
         Route::get('/terms-conditions', [\App\Http\Controllers\User\TermsConditionController::class, 'index']);
+        Route::get('/payment-setting', [\App\Http\Controllers\User\PaymentSettingController::class, 'show']);
 
         // 🏢 Committees
         Route::get('/committees', [\App\Http\Controllers\User\CommitteeController::class, 'index']);
@@ -143,6 +144,8 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('committees', CommitteeController::class);
         Route::get('/terms-conditions', [\App\Http\Controllers\Admin\TermsConditionController::class, 'show']);
         Route::post('/terms-conditions', [\App\Http\Controllers\Admin\TermsConditionController::class, 'update']);
+        Route::get('/payment-setting', [\App\Http\Controllers\Admin\PaymentSettingController::class, 'show']);
+        Route::post('/payment-setting', [\App\Http\Controllers\Admin\PaymentSettingController::class, 'update']);
 
         // 🏗️ Materials & Stocks Admin Management
         Route::apiResource('materials', \App\Http\Controllers\Admin\MaterialController::class);
