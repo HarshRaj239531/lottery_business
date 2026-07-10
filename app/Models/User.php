@@ -13,7 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'address', 'id_proof', 'photo', 'aadhar_card', 'pan_card', 'otp', 'otp_expires_at', 'is_phone_verified', 'bank_name', 'bank_account_number', 'bank_ifsc', 'bank_account_type'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'address', 'id_proof', 'photo', 'aadhar_card', 'pan_card', 'otp', 'otp_expires_at', 'is_phone_verified', 'bank_name', 'bank_account_number', 'bank_ifsc', 'bank_account_type', 'additional_documents'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

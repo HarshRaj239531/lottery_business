@@ -57,6 +57,20 @@ class ProfileController extends Controller
             'photo' => $user->photo ? url("/api/documents/{$user->photo}") : null,
         ];
 
+        $additional = [];
+        if ($user->additional_documents) {
+            $decoded = json_decode($user->additional_documents, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $key => $docInfo) {
+                    $additional[$key] = [
+                        'title' => $docInfo['title'] ?? $key,
+                        'url' => isset($docInfo['path']) && $docInfo['path'] ? url("/api/documents/{$docInfo['path']}") : null
+                    ];
+                }
+            }
+        }
+        $documents['additional'] = (object)$additional;
+
         return ApiResponse::success($documents, 'Vault documents fetched securely');
     }
 
@@ -68,6 +82,8 @@ class ProfileController extends Controller
             'pan_card' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             'id_proof' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'additional_file' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'additional_title' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -97,6 +113,32 @@ class ProfileController extends Controller
             if ($request->hasFile('photo')) {
                 if ($user->photo) Storage::disk('local')->delete($user->photo);
                 $updates['photo'] = $request->file('photo')->store("kyc/{$user->id}", 'local');
+            }
+
+            if ($request->hasFile('additional_file') && $request->has('additional_title')) {
+                $title = $request->additional_title;
+                $key = strtolower(str_replace(' ', '_', $title));
+                $path = $request->file('additional_file')->store("kyc/{$user->id}", 'local');
+
+                $additional = [];
+                if ($user->additional_documents) {
+                    $decoded = json_decode($user->additional_documents, true);
+                    if (is_array($decoded)) {
+                        $additional = $decoded;
+                    }
+                }
+
+                // Delete old file if key already exists
+                if (isset($additional[$key]) && isset($additional[$key]['path'])) {
+                    Storage::disk('local')->delete($additional[$key]['path']);
+                }
+
+                $additional[$key] = [
+                    'title' => $title,
+                    'path' => $path
+                ];
+
+                $updates['additional_documents'] = json_encode($additional);
             }
 
             if (!empty($updates)) {
