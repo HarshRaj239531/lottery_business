@@ -94,51 +94,20 @@
             </div>
         </div>
 
-        <!-- Right Column: Biometric Face match and Checklists -->
+        <!-- Right Column: Dynamic KYC Verification Queue -->
         <div class="flex-column" style="gap: 20px;">
-            
-            <!-- Biometric Webcam Viewport mock -->
-            <div class="panel-card" style="margin-bottom:0;">
-                <div class="panel-card-header">
-                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #374151;">Biometric Face-Match</h3>
-                </div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Confirm liveness detection using webcam snapshot feed.</p>
-                
-                <div class="camera-preview-box">
-                    <div class="camera-overlay"></div>
-                    <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: rgba(255,255,255,0.4); z-index: 1;"></i>
+            <div class="panel-card" style="margin-bottom:0; display:flex; flex-direction:column; gap:16px;">
+                <div class="panel-card-header" style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 10px; width:100%;">
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #374151;"><i class="fa-solid fa-user-shield" style="margin-right:6px; color:var(--primary);"></i> KYC Verification Center</h3>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Review and approve uploaded identification documents.</span>
                 </div>
                 
-                <button class="btn-secondary" style="width:100%; margin-top: 14px; border-radius: 6px; padding: 10px 0; font-size:0.8rem;" onclick="alert('Camera snapshot feature simulated for demo purposes.')">
-                    <i class="fa-solid fa-aperture"></i> Capture Snapshot
-                </button>
-            </div>
-
-            <!-- KYC Compliance Checklist -->
-            <div class="panel-card" style="margin-bottom:0;">
-                <div class="panel-card-header">
-                    <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #374151;">Verification Steps</h3>
-                </div>
-                <div class="flex-column" style="gap: 12px; margin-top: 8px;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; font-size: 0.8rem;">
-                        <span style="display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-circle-check" style="color: var(--accent);"></i> User Profile Selected</span>
-                        <span style="color: var(--accent); font-weight:700;">OK</span>
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; font-size: 0.8rem;">
-                        <span style="display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-circle-check" style="color: var(--accent);"></i> Document Scans Uploaded</span>
-                        <span style="color: var(--accent); font-weight:700;">OK</span>
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; font-size: 0.8rem;">
-                        <span style="display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-circle" style="color: var(--text-muted);"></i> OCR Data Extraction</span>
-                        <span style="color: var(--text-muted); font-weight:600;">Pending</span>
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; font-size: 0.8rem;">
-                        <span style="display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-circle" style="color: var(--text-muted);"></i> Biometric Match Checks</span>
-                        <span style="color: var(--text-muted); font-weight:600;">Pending</span>
+                <div id="kyc-review-list" style="display:flex; flex-direction:column; gap:12px; max-height: 550px; overflow-y: auto; padding-right:5px;">
+                    <div style="text-align:center; padding: 40px; color:var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading verification queue...
                     </div>
                 </div>
             </div>
-
         </div>
 
     </div>
@@ -219,6 +188,11 @@
                 if (subFront) subFront.textContent = 'Click to upload front scan';
                 const subBack = document.querySelector('.upload-zone:nth-of-type(2) span:nth-of-type(2)');
                 if (subBack) subBack.textContent = 'Click to upload back scan (Optional)';
+                
+                // Dynamically reload KYC list/dropdown
+                if (typeof loadKycData === 'function') {
+                    loadKycData();
+                }
             } else {
                 alert(data.message || 'Failed to submit KYC documents.');
             }

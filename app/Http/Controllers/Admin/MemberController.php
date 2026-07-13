@@ -23,8 +23,56 @@ class MemberController extends Controller
     public function index(Request $request)
     {
         $query = User::role(['member', 'agent'])
-            ->with(['roles', 'loans'])
-            ->withCount(['committees', 'loans']);
+            ->with(['roles', 'loans', 'committees'])
+            ->withCount(['committees', 'loans'])
+            ->withSum(['installments as total_investment' => function($q) {
+                $q->where('installments.status', 'paid');
+            }], 'amount');
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status === 'active') {
+                // Active: has at least one active committee or active loan
+                $query->where(function($q) {
+                    $q->whereHas('committees', function($c) {
+                        $c->where('committees.status', 'active');
+                    })->orWhereHas('loans', function($l) {
+                        $l->where('loans.status', 'active');
+                    });
+                });
+            } elseif ($status === 'pending') {
+                // Pending: missing verified phone, or missing aadhar/pan
+                $query->where(function($q) {
+                    $q->whereNull('aadhar_card')
+                      ->orWhereNull('pan_card')
+                      ->orWhereNull('id_proof');
+                });
+            } elseif ($status === 'inactive') {
+                // Inactive: neither active nor pending
+                $query->whereDoesntHave('committees')
+                      ->whereDoesntHave('loans');
+            }
+        }
+
+        // Community filter
+        if ($request->filled('community')) {
+            $community = $request->input('community');
+            $query->whereHas('committees', function($q) use ($community) {
+                $q->where('name', $community);
+            });
+        }
 
         if ($request->ajax() || $request->has('draw')) {
             return DataTables::of($query)->make(true);
@@ -41,6 +89,7 @@ class MemberController extends Controller
     |--------------------------------------------------------------------------
     | ➕ CREATE MEMBER / AGENT
     |--------------------------------------------------------------------------
+    |
     */
     public function store(MemberRequest $request)
     {
@@ -67,7 +116,7 @@ class MemberController extends Controller
     {
         $this->authorize('view', User::class);
 
-        $user = User::findOrFail($id);
+        $user = User::with(['roles', 'committees', 'loans'])->findOrFail($id);
 
         return ApiResponse::success(
             $user,

@@ -32,4 +32,18 @@ class DocumentController extends Controller
         // Return the file stream securely
         return Storage::disk('local')->response($path);
     }
+
+    /**
+     * Publicly serve user profile photo
+     */
+    public function showProfilePhoto($userId, $filename)
+    {
+        $path = "kyc/{$userId}/{$filename}";
+
+        if (!Storage::disk('local')->exists($path)) {
+            return response()->json(['message' => 'Photo not found'], 404);
+        }
+
+        return Storage::disk('local')->response($path);
+    }
 }

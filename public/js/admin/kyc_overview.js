@@ -27,6 +27,76 @@
             } else {
                 select.innerHTML = '<option value="">No members/agents found</option>';
             }
+
+            // Populate the KYC review list queue
+            const reviewList = document.getElementById('kyc-review-list');
+            if (reviewList) {
+                reviewList.innerHTML = '';
+                if (membersList.length > 0) {
+                    membersList.forEach(m => {
+                        const roleText = m.roles && m.roles.some(r => r.name === 'agent') ? 'Agent' : 'Member';
+                        
+                        // Status & Badges
+                        let statusText = 'Pending Uploads';
+                        let badgeClass = 'badge-failed';
+                        const hasAadhar = !!m.aadhar_card;
+                        const hasPan = !!m.pan_card;
+                        const hasIdProof = !!m.id_proof;
+                        
+                        if (hasAadhar && hasPan && hasIdProof) {
+                            statusText = 'Verified';
+                            badgeClass = 'badge-success';
+                        } else if (hasAadhar || hasPan || hasIdProof) {
+                            statusText = 'Awaiting Review';
+                            badgeClass = 'badge-pending';
+                        }
+
+                        // Doc Buttons
+                        const aadharBtn = hasAadhar 
+                            ? `<button class="btn-secondary" onclick="viewKycDocument(${m.id}, '${m.aadhar_card}')" style="padding: 4px 8px; font-size: 0.7rem; color:#15803d; border-color:#bbf7d0; background:#f0fdf4; margin-right:4px; cursor:pointer;"><i class="fa-solid fa-file-image"></i> Aadhar</button>`
+                            : `<span style="font-size: 0.7rem; color:var(--text-muted); border:1px dashed #cbd5e1; padding:4px 8px; border-radius:4px; margin-right:4px;"><i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-right:3px;"></i> Aadhar</span>`;
+
+                        const panBtn = hasPan 
+                            ? `<button class="btn-secondary" onclick="viewKycDocument(${m.id}, '${m.pan_card}')" style="padding: 4px 8px; font-size: 0.7rem; color:#15803d; border-color:#bbf7d0; background:#f0fdf4; margin-right:4px; cursor:pointer;"><i class="fa-solid fa-file-image"></i> PAN</button>`
+                            : `<span style="font-size: 0.7rem; color:var(--text-muted); border:1px dashed #cbd5e1; padding:4px 8px; border-radius:4px; margin-right:4px;"><i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-right:3px;"></i> PAN</span>`;
+
+                        const idProofBtn = hasIdProof 
+                            ? `<button class="btn-secondary" onclick="viewKycDocument(${m.id}, '${m.id_proof}')" style="padding: 4px 8px; font-size: 0.7rem; color:#15803d; border-color:#bbf7d0; background:#f0fdf4; margin-right:4px; cursor:pointer;"><i class="fa-solid fa-file-image"></i> ID Proof</button>`
+                            : `<span style="font-size: 0.7rem; color:var(--text-muted); border:1px dashed #cbd5e1; padding:4px 8px; border-radius:4px; margin-right:4px;"><i class="fa-solid fa-circle-xmark" style="color:#ef4444; margin-right:3px;"></i> ID Proof</span>`;
+
+                        // Actions
+                        let actionsHtml = '';
+                        if (hasAadhar || hasPan || hasIdProof) {
+                            actionsHtml = `
+                                <div style="display:flex; gap:6px; margin-top:4px; width:100%;">
+                                    <button class="btn-primary" onclick="approveKyc(${m.id})" style="flex:1; padding:6px; font-size:0.75rem; background:var(--primary); height:auto; border-radius:6px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Approve KYC</button>
+                                    <button class="btn-secondary text-danger" onclick="rejectKyc(${m.id})" style="padding:6px 12px; font-size:0.75rem; background:#fee2e2; border-color:#fca5a5; border-radius:6px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-trash"></i> Reject</button>
+                                </div>
+                            `;
+                        }
+
+                        reviewList.innerHTML += `
+                            <div style="margin:0; padding:12px; background:#ffffff; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:0.85rem; color:#0f172a; display:block;">${m.name}</strong>
+                                        <span style="font-size:0.7rem; color:var(--text-muted);">ID: #MEM-${m.id} • ${roleText}</span>
+                                    </div>
+                                    <span class="badge ${badgeClass}" style="font-size:0.65rem; text-transform:capitalize;">${statusText}</span>
+                                </div>
+                                <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
+                                    ${aadharBtn}
+                                    ${panBtn}
+                                    ${idProofBtn}
+                                </div>
+                                ${actionsHtml}
+                            </div>
+                        `;
+                    });
+                } else {
+                    reviewList.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">No members/agents registered.</div>`;
+                }
+            }
         } catch (e) {
             console.error(e);
         }
@@ -303,6 +373,38 @@
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    // KYC Approve and Reject actions
+    window.approveKyc = async function(id) {
+        try {
+            const res = await fetch(`/api/admin/kyc/${id}/approve`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            alert(data.message || 'KYC Approved successfully.');
+            loadKycData();
+        } catch (e) {
+            console.error(e);
+            alert('Failed: ' + e.message);
+        }
+    };
+
+    window.rejectKyc = async function(id) {
+        if (!confirm('Are you sure you want to reject and clear these KYC documents?')) return;
+        try {
+            const res = await fetch(`/api/admin/kyc/${id}/reject`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            alert(data.message || 'KYC Documents rejected and cleared.');
+            loadKycData();
+        } catch (e) {
+            console.error(e);
+            alert('Failed: ' + e.message);
         }
     };
 

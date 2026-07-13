@@ -73,9 +73,6 @@ class KycController extends Controller
                     break;
             }
 
-            // KYC Status (better approach)
-            $user->kyc_status = 'pending';
-
             $user->save();
 
             DB::commit();
@@ -101,5 +98,39 @@ class KycController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Approve KYC
+     */
+    public function approve($id)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'KYC approved successfully.'
+        ]);
+    }
+
+    /**
+     * Reject and Clear KYC
+     */
+    public function reject($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->aadhar_card) Storage::disk('local')->delete($user->aadhar_card);
+        if ($user->pan_card) Storage::disk('local')->delete($user->pan_card);
+        if ($user->id_proof) Storage::disk('local')->delete($user->id_proof);
+
+        $user->update([
+            'aadhar_card' => null,
+            'pan_card' => null,
+            'id_proof' => null,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'KYC documents rejected and cleared successfully.'
+        ]);
     }
 }

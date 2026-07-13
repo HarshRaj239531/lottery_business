@@ -24,6 +24,7 @@ class ProfileController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'phone' => 'sometimes|string|unique:users,phone,' . $user->id,
             'address' => 'sometimes|string',
             'bank_name' => 'sometimes|string',
@@ -37,7 +38,7 @@ class ProfileController extends Controller
         }
 
         $user->update($request->only([
-            'name', 'phone', 'address', 
+            'name', 'email', 'phone', 'address', 
             'bank_name', 'bank_account_number', 'bank_ifsc', 'bank_account_type'
         ]));
 

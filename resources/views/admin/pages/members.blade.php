@@ -140,64 +140,8 @@
                 </thead>
                 <tbody id="members-table-tbody">
                     <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <!-- Tinted icon container (Dawadukkan Design) -->
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap: 1px;">
-                                    <span class="user-detail-name">Elena Rodriguez</span>
-                                    <span class="user-detail-sub">elena.r@example.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#MEM-90210</td>
-                        <td>Tech Hub East</td>
-                        <td class="font-semibold">$45,000.00</td>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="impersonateMember(1)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">View Details</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap: 1px;">
-                                    <span class="user-detail-name">Marcus Chen</span>
-                                    <span class="user-detail-sub">m.chen@corporate.net</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#MEM-77421</td>
-                        <td>Pacific Investors</td>
-                        <td class="font-semibold">$128,500.00</td>
-                        <td><span class="badge badge-pending">Pending</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="impersonateMember(2)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">View Details</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap: 1px;">
-                                    <span class="user-detail-name">Sarah Jenkins</span>
-                                    <span class="user-detail-sub">sarah.j@design.co</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#MEM-44219</td>
-                        <td>Euro Green Group</td>
-                        <td class="font-semibold">$12,200.00</td>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="impersonateMember(3)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">View Details</a>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading community members...
                         </td>
                     </tr>
                 </tbody>
@@ -206,15 +150,9 @@
 
         <!-- Pagination (Dawadukkan Design) -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
-            <span class="text-sm text-muted">Showing 1 to 3 of 12,482 members</span>
-            <div style="display:flex; gap:6px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="btn-primary" style="padding: 6px 12px; font-size:0.8rem; background-color: var(--primary); border-radius: 6px;">1</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">2</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">3</button>
-                <span style="align-self:center; color: var(--text-muted); padding: 0 4px;">...</span>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">312</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>
+            <span class="text-sm text-muted" id="members-pagination-text">Showing 0 to 0 of 0 members</span>
+            <div style="display:flex; gap:6px;" id="members-pagination-controls">
+                <!-- Dynamic pagination buttons go here -->
             </div>
         </div>
     </div>

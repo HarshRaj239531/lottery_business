@@ -67,6 +67,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 });
 
+// 🖼️ Public Profile Photo Viewer
+Route::get('/profile-photo/{userId}/{filename}', [\App\Http\Controllers\Api\DocumentController::class, 'showProfilePhoto']);
+
 // 🧑 User Specific API Routes
 Route::prefix('user')->group(function () {
     Route::post('/login', [\App\Http\Controllers\Api\UserAuthController::class, 'login']);
@@ -197,6 +200,8 @@ Route::prefix('admin')->group(function () {
 
         // 👮 KYC Verification
         Route::post('/kyc/submit', [\App\Http\Controllers\Admin\KycController::class, 'submit']);
+        Route::post('/kyc/{id}/approve', [\App\Http\Controllers\Admin\KycController::class, 'approve']);
+        Route::post('/kyc/{id}/reject', [\App\Http\Controllers\Admin\KycController::class, 'reject']);
 
     });
 });
