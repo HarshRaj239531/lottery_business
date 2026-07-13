@@ -156,6 +156,16 @@ class LoanController extends Controller
                 'paid_date' => now(),
             ]);
 
+            // Create User Transaction (Log member payment)
+            \App\Models\UserTransaction::create([
+                'user_id' => $installment->loan->user_id,
+                'type' => 'credit',
+                'amount' => $installment->total_amount,
+                'description' => "Paid loan installment #{$installment->id}",
+                'reference_type' => \App\Models\LoanInstallment::class,
+                'reference_id' => $installment->id,
+            ]);
+
             $pending = LoanInstallment::where('loan_id', $installment->loan_id)
                 ->where('status', 'pending')
                 ->count();

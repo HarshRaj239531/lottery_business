@@ -88,4 +88,52 @@ class NotificationController extends Controller
             return ApiResponse::error($e->getMessage());
         }
     }
+
+    // 🔔 Send Custom DB Notification (Admin to Member/Bulk)
+    public function sendCustom(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|string',
+                'title' => 'required|string|max:255',
+                'message' => 'required|string|max:1000'
+            ]);
+
+            $userId = $request->user_id;
+            $title = $request->title;
+            $message = $request->message;
+
+            if ($userId === 'all_due') {
+                $users = \App\Models\User::role('member')
+                    ->whereHas('installments', function($q) {
+                        $q->where('status', 'pending')
+                          ->where('due_date', '<', now());
+                    })->get();
+
+                foreach ($users as $user) {
+                    $this->service->sendNotification($user, $title, $message);
+                }
+                return ApiResponse::success(null, 'Overdue warning sent to ' . $users->count() . ' members');
+            } 
+            elseif ($userId === 'all_pending') {
+                $users = \App\Models\User::role('member')
+                    ->whereHas('installments', function($q) {
+                        $q->where('status', 'pending');
+                    })->get();
+
+                foreach ($users as $user) {
+                    $this->service->sendNotification($user, $title, $message);
+                }
+                return ApiResponse::success(null, 'Payment reminder sent to ' . $users->count() . ' members');
+            } 
+            else {
+                $user = \App\Models\User::findOrFail((int)$userId);
+                $this->service->sendNotification($user, $title, $message);
+                return ApiResponse::success(null, 'Notification sent to ' . $user->name);
+            }
+
+        } catch (\Exception $e) {
+            return ApiResponse::error($e->getMessage());
+        }
+    }
 }

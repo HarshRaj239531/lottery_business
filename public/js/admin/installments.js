@@ -6,8 +6,17 @@
             const dataComm = await resComm.json();
             const commTbody = document.getElementById('installments-tbody');
             commTbody.innerHTML = '';
-            if(Array.isArray(dataComm)) {
-                dataComm.forEach(i => {
+            
+            const listComm = Array.isArray(dataComm?.data?.data)
+                ? dataComm.data.data
+                : (Array.isArray(dataComm?.data)
+                    ? dataComm.data
+                    : (Array.isArray(dataComm)
+                        ? dataComm
+                        : []));
+            
+            if(listComm.length > 0) {
+                listComm.forEach(i => {
                     const userName = i.user ? i.user.name : i.user_id;
                     const commName = i.committee ? i.committee.name : i.committee_id;
                     let badgeColor = i.status === 'paid' ? '#10b981' : '#f59e0b';
@@ -22,6 +31,8 @@
                         </tr>
                     `;
                 });
+            } else {
+                commTbody.innerHTML = '<tr><td colspan="6" class="text-center">No committee installments found.</td></tr>';
             }
 
             // 2. Loan Installments

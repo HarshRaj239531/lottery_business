@@ -64,6 +64,7 @@
                                     <th>Due (₹)</th>
                                     <th>Total (₹)</th>
                                     <th>Installments</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="committee-details-tbody">

@@ -41,6 +41,8 @@
             const tbody = document.getElementById('committee-details-tbody');
             tbody.innerHTML = '';
             
+            const commAmount = data.committee.amount || 0;
+            
             if(data.members && Array.isArray(data.members)) {
                 data.members.forEach(m => {
                     tbody.innerHTML += `
@@ -52,9 +54,72 @@
                             <td class="text-danger">₹${m.total_due}</td>
                             <td>₹${m.total_expected}</td>
                             <td>${m.installments_remaining} left (of ${m.total_installments})</td>
+                            <td>
+                                ${m.installments_remaining > 0 ? `
+                                    <button class="btn-primary" onclick="openCollectPaymentModal(${m.id}, ${id}, ${commAmount})" style="padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;"><i class="fa-solid fa-indian-rupee-sign"></i> Pay Installment</button>
+                                ` : '<span class="badge badge-success">Completed</span>'}
+                            </td>
                         </tr>
                     `;
                 });
             }
         } catch (err) { console.error(err); }
     }
+
+    // Modal & Collect Payment dynamic callbacks
+    window.openCollectPaymentModal = function(userId, committeeId, amount) {
+        document.getElementById('modal-title').textContent = 'Collect Committee Installment';
+        document.getElementById('modal-body').innerHTML = `
+            <form id="collect-installment-form" onsubmit="submitCollectInstallment(event)">
+                <input type="hidden" id="ci_user_id" value="${userId}">
+                <input type="hidden" id="ci_committee_id" value="${committeeId}">
+                
+                <div class="input-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; font-weight:600; color:#374151;">Installment Amount (₹)</label>
+                    <input type="number" id="ci_amount" value="${amount}" class="filter-select" style="width:100%; border:1px solid #d1d5db; height:40px; border-radius:6px; padding:0 12px; box-sizing:border-box;" required>
+                </div>
+                
+                <div class="input-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; font-weight:600; color:#374151;">Payment Date</label>
+                    <input type="date" id="ci_paid_date" value="${new Date().toISOString().split('T')[0]}" class="filter-select" style="width:100%; border:1px solid #d1d5db; height:40px; border-radius:6px; padding:0 12px; box-sizing:border-box;" required>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width:100%; height:42px; border-radius:8px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-circle-check"></i> Submit Payment</button>
+            </form>
+        `;
+        document.getElementById('global-modal').style.display = 'flex';
+    };
+
+    window.submitCollectInstallment = async function(event) {
+        event.preventDefault();
+        
+        const userId = document.getElementById('ci_user_id').value;
+        const committeeId = document.getElementById('ci_committee_id').value;
+        const amount = document.getElementById('ci_amount').value;
+        const paidDate = document.getElementById('ci_paid_date').value;
+        
+        try {
+            const res = await fetch('/api/admin/installments/collect', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    user_id: userId,
+                    committee_id: committeeId,
+                    amount: amount,
+                    paid_date: paidDate,
+                    status: 'paid'
+                })
+            });
+            const data = await res.json();
+            if (data.status === true || data.status === 'success') {
+                alert(data.message || 'Payment collected successfully!');
+                closeModal();
+                loadCommitteeDetails(committeeId);
+            } else {
+                alert(data.message || 'Failed to collect payment.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error: ' + e.message);
+        }
+    };

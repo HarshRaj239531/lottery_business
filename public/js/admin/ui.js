@@ -77,13 +77,50 @@
             modalTitle.textContent = 'Collect Payment';
             html = `
                 <form id="modal-form" onsubmit="submitForm(event, 'installments')">
-                    <div class="input-group"><label>User ID</label><div class="input-field"><input type="number" id="i_user" required></div></div>
-                    <div class="input-group"><label>Committee ID</label><div class="input-field"><input type="number" id="i_comm" required></div></div>
-                    <div class="input-group"><label>Amount Collected (₹)</label><div class="input-field"><input type="number" id="i_amount" required></div></div>
-                    <div class="input-group"><label>Due Date</label><div class="input-field"><input type="date" id="i_due" required></div></div>
+                    <div class="input-group">
+                        <label>Select Member</label>
+                        <select id="i_user" onchange="updateCommitteeDropdown(this.value)" class="input-field" style="width:100%; border:none; background:transparent;" required>
+                            <option value="">-- Choose Member --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Select Committee</label>
+                        <select id="i_comm" onchange="updateAmountField()" class="input-field" style="width:100%; border:none; background:transparent;" required>
+                            <option value="">-- Choose Committee --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Amount Collected (₹)</label>
+                        <div class="input-field"><input type="number" id="i_amount" required></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Due Date</label>
+                        <select id="i_due" class="input-field" style="width:100%; border:none; background:transparent;" required>
+                            <option value="">-- Choose Due Date --</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn-primary">Record Payment</button>
                 </form>
             `;
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/members?paginate=200', { headers: getHeaders() });
+                    const json = await res.json();
+                    const members = json.data?.data || json.data || [];
+                    const select = document.getElementById('i_user');
+                    if (select && members.length > 0) {
+                        members.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.textContent = `${m.name} (#${m.id} - ${m.phone || m.email})`;
+                            select.appendChild(opt);
+                        });
+                        window.installmentMembersList = members;
+                    }
+                } catch(e) {
+                    console.error("Error loading members:", e);
+                }
+            }, 100);
         }
         else if (type === 'edit-committee') {
             modalTitle.textContent = 'Edit Committee #' + id;
@@ -425,5 +462,74 @@
         } catch (err) {
             console.error(err);
             alert('Request failed');
+        }
+    };
+
+    window.updateCommitteeDropdown = async function(userId) {
+        const commSelect = document.getElementById('i_comm');
+        const amountInput = document.getElementById('i_amount');
+        const dueSelect = document.getElementById('i_due');
+        
+        if (!commSelect) return;
+        commSelect.innerHTML = '<option value="">-- Choose Committee --</option>';
+        dueSelect.innerHTML = '<option value="">-- Choose Due Date --</option>';
+        amountInput.value = '';
+        
+        if (!userId) return;
+        
+        const members = window.installmentMembersList || [];
+        const user = members.find(m => m.id == userId);
+        if (user && user.committees && Array.isArray(user.committees)) {
+            user.committees.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (₹${c.amount})`;
+                commSelect.appendChild(opt);
+            });
+        }
+    };
+    
+    window.updateAmountField = async function() {
+        const userId = document.getElementById('i_user').value;
+        const committeeId = document.getElementById('i_comm').value;
+        const amountInput = document.getElementById('i_amount');
+        const dueSelect = document.getElementById('i_due');
+        
+        if (!amountInput || !dueSelect) return;
+        amountInput.value = '';
+        dueSelect.innerHTML = '<option value="">-- Choose Due Date --</option>';
+        
+        if (!userId || !committeeId) return;
+        
+        const members = window.installmentMembersList || [];
+        const user = members.find(m => m.id == userId);
+        if (user && user.committees) {
+            const committee = user.committees.find(c => c.id == committeeId);
+            if (committee) {
+                amountInput.value = committee.amount || '';
+            }
+        }
+        
+        // Fetch pending installments to populate due_date select
+        try {
+            const res = await fetch(`/api/admin/installments/pending?user_id=${userId}&committee_id=${committeeId}`, { headers: getHeaders() });
+            const json = await res.json();
+            const pendingList = json.data || [];
+            
+            if (pendingList.length > 0) {
+                pendingList.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.due_date;
+                    opt.textContent = item.due_date;
+                    dueSelect.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '-- No pending installments --';
+                dueSelect.appendChild(opt);
+            }
+        } catch (e) {
+            console.error("Error loading pending due dates:", e);
         }
     };

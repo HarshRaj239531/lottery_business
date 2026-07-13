@@ -209,43 +209,92 @@
         }
     };
 
-    window.sendDueWarnings = async function() {
-        if (!confirm("Are you sure you want to send SMS warnings to all members with overdue payments?")) return;
-        
-        try {
-            const res = await fetch('/api/admin/installments/send-warnings', {
-                method: 'POST',
-                headers: getHeaders()
-            });
-            const data = await res.json();
-            if (res.ok) {
-                alert('Success: ' + data.message);
-            } else {
-                alert('Error: ' + (data.message || 'Failed to send warnings'));
-            }
-        } catch (err) {
-            console.error(err);
-            alert('Request failed');
-        }
+    window.sendDueWarnings = function() {
+        window.openNotificationModal('warning');
     };
 
-    window.sendPaymentReminders = async function() {
-        if (!confirm("Are you sure you want to send SMS payment reminders to members with upcoming dues (next 3 days)?")) return;
-        
+    window.sendPaymentReminders = function() {
+        window.openNotificationModal('reminder');
+    };
+
+    window.openNotificationModal = function(type) {
+        const title = type === 'warning' ? 'Send Due Warnings' : 'Send Payment Reminders';
+        const defaultTitleText = type === 'warning' ? 'Overdue Payment Notice' : 'Upcoming Payment Reminder';
+        const defaultMsgText = type === 'warning' 
+            ? 'Your installment payment is overdue. Please log in to your dashboard and complete payment immediately to avoid default.'
+            : 'This is a friendly reminder that your upcoming installment is due soon. Please check your Janta Community dashboard and ensure payment is made.';
+
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').innerHTML = `
+            <form id="custom-notification-form" onsubmit="submitCustomNotification(event)">
+                <div class="input-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; font-weight:600; color:#374151;">Select Recipient</label>
+                    <select id="cn_user_id" class="input-field" style="width:100%; border:none; background:transparent;" required>
+                        ${type === 'warning' 
+                            ? '<option value="all_due" selected>⚠️ All Overdue Members (Bulk)</option>'
+                            : '<option value="all_pending" selected>⏰ All Pending Members (Bulk)</option>'}
+                    </select>
+                </div>
+                <div class="input-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; font-weight:600; color:#374151;">Notification Title</label>
+                    <div class="input-field"><input type="text" id="cn_title" value="${defaultTitleText}" required style="width:100%; border:none; background:transparent; outline:none;"></div>
+                </div>
+                <div class="input-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; font-weight:600; color:#374151;">Message Content</label>
+                    <textarea id="cn_message" rows="4" class="input-field" style="width:100%; height:80px; border:none; background:transparent; padding:10px; resize:none;" required>${defaultMsgText}</textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%; height:42px; border-radius:8px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i> Send Notification</button>
+            </form>
+        `;
+        document.getElementById('global-modal').style.display = 'flex';
+
+        // Load specific members in case they want to select an individual
+        setTimeout(async () => {
+            try {
+                const res = await fetch('/api/admin/members?paginate=200', { headers: getHeaders() });
+                const json = await res.json();
+                const members = json.data?.data || json.data || [];
+                const select = document.getElementById('cn_user_id');
+                if (select && members.length > 0) {
+                    members.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = `${m.name} (#${m.id} - ${m.phone || m.email})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch(e) {
+                console.error("Error loading members:", e);
+            }
+        }, 100);
+    };
+
+    window.submitCustomNotification = async function(event) {
+        event.preventDefault();
+        const userId = document.getElementById('cn_user_id').value;
+        const title = document.getElementById('cn_title').value;
+        const message = document.getElementById('cn_message').value;
+
         try {
-            const res = await fetch('/api/admin/installments/send-payment-reminders', {
+            const res = await fetch('/api/admin/notifications/send-custom', {
                 method: 'POST',
-                headers: getHeaders()
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    user_id: userId,
+                    title: title,
+                    message: message
+                })
             });
             const data = await res.json();
-            if (res.ok) {
-                alert('Success: ' + data.message);
+            if (data.status === true || data.status === 'success') {
+                alert(data.message || 'Notification sent successfully!');
+                closeModal();
             } else {
-                alert('Error: ' + (data.message || 'Failed to send payment reminders'));
+                alert(data.message || 'Failed to send notification.');
             }
-        } catch (err) {
-            console.error(err);
-            alert('Request failed');
+        } catch (e) {
+            console.error(e);
+            alert('Error: ' + e.message);
         }
     };
 

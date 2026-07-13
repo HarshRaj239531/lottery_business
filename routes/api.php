@@ -85,6 +85,7 @@ Route::prefix('user')->group(function () {
         Route::post('/vault/upload', [\App\Http\Controllers\User\ProfileController::class, 'uploadVault']);
         Route::get('/terms-conditions', [\App\Http\Controllers\User\TermsConditionController::class, 'index']);
         Route::get('/payment-setting', [\App\Http\Controllers\User\PaymentSettingController::class, 'show']);
+        Route::get('/notifications', [\App\Http\Controllers\Api\MemberDashboardController::class, 'notifications']);
 
         // 🏢 Committees
         Route::get('/committees', [\App\Http\Controllers\User\CommitteeController::class, 'index']);
@@ -161,9 +162,15 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('loans', \App\Http\Controllers\Admin\LoanController::class);
 
         // 💰 Installments
+        Route::post('/installments/collect', [\App\Http\Controllers\Admin\InstallmentController::class, 'collect']);
         Route::post('/installments/{id}/collect', [\App\Http\Controllers\Admin\InstallmentController::class, 'collect']);
         Route::get('/installments/pending', [\App\Http\Controllers\Admin\InstallmentController::class, 'pending']);
+        Route::post('/installments/send-warnings', [\App\Http\Controllers\Admin\InstallmentController::class, 'sendWarnings']);
+        Route::post('/installments/send-payment-reminders', [\App\Http\Controllers\Admin\InstallmentController::class, 'sendPaymentReminders']);
         Route::apiResource('installments', \App\Http\Controllers\Admin\InstallmentController::class);
+
+        // 🔔 Notifications (Admin)
+        Route::post('/notifications/send-custom', [\App\Http\Controllers\Admin\NotificationController::class, 'sendCustom']);
 
         // 🎟️ Lotteries
         Route::post('/lotteries', [\App\Http\Controllers\Admin\LotteryController::class, 'store']);

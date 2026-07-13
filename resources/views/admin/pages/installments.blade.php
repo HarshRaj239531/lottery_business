@@ -1,11 +1,11 @@
                 <!-- Installments View -->
                 <div id="view-installments" class="view-section" style="display:none;">
-                    <div class="header-action">
+                    <div class="header-action" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                         <h2>Installments Collection</h2>
-                        <div>
-                            <button class="btn-secondary" style="margin-right: 10px; background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.5);" onclick="sendPaymentReminders()"><i class="fa-solid fa-clock"></i> Send Payment Reminders</button>
-                            <button class="btn-secondary" style="margin-right: 10px; background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.5);" onclick="sendDueWarnings()"><i class="fa-solid fa-triangle-exclamation"></i> Send Due Warnings</button>
-                            <button class="btn-primary" onclick="openModal('collect-installment')"><i class="fa-solid fa-hand-holding-dollar"></i> Collect Payment</button>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn-secondary" style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); margin: 0;" onclick="sendPaymentReminders()"><i class="fa-solid fa-clock"></i> Send Payment Reminders</button>
+                            <button class="btn-secondary" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); margin: 0;" onclick="sendDueWarnings()"><i class="fa-solid fa-triangle-exclamation"></i> Send Due Warnings</button>
+                            <button class="btn-primary" style="margin: 0;" onclick="openModal('collect-installment')"><i class="fa-solid fa-hand-holding-dollar"></i> Collect Payment</button>
                         </div>
                     </div>
                     <div class="tab-controls" style="display: flex; gap: 10px; margin-bottom: 20px;">

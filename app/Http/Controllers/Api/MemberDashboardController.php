@@ -202,4 +202,14 @@ class MemberDashboardController extends Controller
             'transaction_history' => $transactionHistory
         ], 'Loan details retrieved successfully.');
     }
+
+    // 🔔 Get Member Notifications
+    public function notifications(Request $request)
+    {
+        $notifications = \App\Models\Notification::where('user_id', $request->user()->id)
+            ->latest()
+            ->take(50)
+            ->get();
+        return ApiResponse::success($notifications, 'Notifications retrieved successfully.');
+    }
 }

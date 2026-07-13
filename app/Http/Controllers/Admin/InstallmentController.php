@@ -52,6 +52,16 @@ class InstallmentController extends Controller
                 'collected_by' => $request->user()->id
             ]);
 
+            // Create User Transaction (Log member payment)
+            \App\Models\UserTransaction::create([
+                'user_id' => $installment->user_id,
+                'type' => 'credit',
+                'amount' => $data['amount'],
+                'description' => "Paid committee installment #{$installment->id}",
+                'reference_type' => \App\Models\Installment::class,
+                'reference_id' => $installment->id,
+            ]);
+
             // Get user
             $user = User::findOrFail($data['user_id']);
 
@@ -188,6 +198,25 @@ class InstallmentController extends Controller
         return response()->json([
             'status' => true,
             'message' => "$count reminders sent"
+        ]);
+    }
+
+    // 📋 Pending List
+    public function pending(\Illuminate\Http\Request $request)
+    {
+        $query = Installment::where('status', 'pending');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('committee_id')) {
+            $query->where('committee_id', $request->committee_id);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $query->orderBy('due_date', 'asc')->get()
         ]);
     }
 

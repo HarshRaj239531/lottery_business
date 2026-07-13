@@ -43,7 +43,7 @@ class DashboardController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'photo' => $user->photo ? \Illuminate\Support\Facades\Storage::url($user->photo) : null,
+                'photo' => $user->photo,
             ],
             'wallet' => [
                 'total_balance' => $totalBalance,
