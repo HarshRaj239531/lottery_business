@@ -16,17 +16,14 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $agentId = $request->user()->id;
-
-        // Note: Assuming 'agent_id' column exists in 'users' table to track managed clients.
-        // If not, this can be filtered via committee associations. Here we use agent_id.
-        $clientsQuery = User::role('member')->where('agent_id', $agentId);
+        $clientsQuery = User::role('member');
 
         $totalClients = clone $clientsQuery;
         $totalClientsCount = $totalClients->count();
 
         // Get count of active loans for these clients using a subquery (Prevent Memory Exhaustion)
-        $activeLoansCount = Loan::whereHas('user', function ($q) use ($agentId) {
-            $q->role('member')->where('agent_id', $agentId);
+        $activeLoansCount = Loan::whereHas('user', function ($q) {
+            $q->role('member');
         })->where('status', 'active')->count();
 
         // Get Recent Clients Activity (Figma: Sort By Name)
@@ -72,7 +69,6 @@ class ClientController extends Controller
         $agentId = $request->user()->id;
 
         $client = User::where('id', $id)
-            ->where('agent_id', $agentId)
             ->role('member')
             ->firstOrFail();
 
@@ -83,6 +79,9 @@ class ClientController extends Controller
             'phone' => $client->phone,
             'email' => $client->email,
             'address' => $client->address,
+            'aadhar_card' => $client->aadhar_card ? url("/api/documents/kyc/{$client->id}/" . basename($client->aadhar_card)) : null,
+            'id_proof' => $client->id_proof ? url("/api/documents/kyc/{$client->id}/" . basename($client->id_proof)) : null,
+            'pan_card' => $client->pan_card ? url("/api/documents/kyc/{$client->id}/" . basename($client->pan_card)) : null,
         ];
 
         // Active Loans
@@ -123,5 +122,66 @@ class ClientController extends Controller
             'active_loans' => $activeLoans,
             'recent_transactions' => $recentTransactions
         ], 'Client profile fetched');
+    }
+
+    // 👮 Submit Client KYC Documents
+    public function submitKyc(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'aadhar_front' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'aadhar_back' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'pan_front' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+        ]);
+
+        $userId = $request->input('user_id');
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+
+        try {
+            $user = User::role('member')->findOrFail($userId);
+
+            // Handle Aadhaar Front
+            if ($request->hasFile('aadhar_front')) {
+                if ($user->aadhar_card) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($user->aadhar_card);
+                }
+                $user->aadhar_card = $request->file('aadhar_front')->store("kyc/{$user->id}", 'local');
+            }
+
+            // Handle Aadhaar Back
+            if ($request->hasFile('aadhar_back')) {
+                if ($user->id_proof && $user->id_proof !== $user->aadhar_card) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($user->id_proof);
+                }
+                $user->id_proof = $request->file('aadhar_back')->store("kyc/{$user->id}", 'local');
+            } elseif ($request->hasFile('aadhar_front') && !$user->id_proof) {
+                // fallback to front image if back is not uploaded
+                $user->id_proof = $user->aadhar_card;
+            }
+
+            // Handle PAN Front
+            if ($request->hasFile('pan_front')) {
+                if ($user->pan_card) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($user->pan_card);
+                }
+                $user->pan_card = $request->file('pan_front')->store("kyc/{$user->id}", 'local');
+            }
+
+            $user->save();
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return ApiResponse::success([
+                'user_id' => $user->id,
+                'aadhar_front_url' => $user->aadhar_card ? url("/api/documents/kyc/{$user->id}/" . basename($user->aadhar_card)) : null,
+                'aadhar_back_url' => $user->id_proof ? url("/api/documents/kyc/{$user->id}/" . basename($user->id_proof)) : null,
+                'pan_front_url' => $user->pan_card ? url("/api/documents/kyc/{$user->id}/" . basename($user->pan_card)) : null,
+            ], 'KYC documents submitted successfully');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return ApiResponse::error('KYC upload failed: ' . $e->getMessage(), 500);
+        }
     }
 }

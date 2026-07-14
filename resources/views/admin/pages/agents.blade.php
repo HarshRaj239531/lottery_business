@@ -9,7 +9,7 @@
         <div class="flex-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <h2 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; margin: 0;">Tenant Agents</h2>
             <div class="header-btns" style="display: flex; gap: 12px;">
-                <button class="btn-primary" onclick="openModal('create-member')"><i class="fa-solid fa-user-plus"></i> Register New Agent</button>
+                <button class="btn-primary" onclick="openModal('create-member', 'agent')"><i class="fa-solid fa-user-plus"></i> Register New Agent</button>
             </div>
         </div>
         <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 6px;">Monitor and manage your field collection team.</p>
@@ -78,10 +78,10 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">4.8/5</h2>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Avg. Performance</span>
+                    <h2 id="agent-metric-performance" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">0%</h2>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Avg. Target Progress</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
-                        <div style="color: var(--warning); font-size: 0.65rem; font-weight: 700;">
+                        <div id="agent-performance-status" style="color: var(--warning); font-size: 0.65rem; font-weight: 700;">
                             <i class="fa-solid fa-star"></i> Outstanding
                         </div>
                     </div>
@@ -112,7 +112,7 @@
                 <button class="btn-secondary" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;" onclick="alert('Filtering by region...')"><i class="fa-solid fa-filter"></i> Filter By Region</button>
                 <button class="btn-secondary" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;" onclick="alert('Sorting...')"><i class="fa-solid fa-sort"></i> Sort</button>
             </div>
-            <span class="text-sm text-muted">Showing 1-4 of 84 agents</span>
+            <span id="agents-filter-count" class="text-sm text-muted">Showing 0 of 0 agents</span>
         </div>
 
         <div class="table-responsive">
@@ -129,89 +129,11 @@
                     </tr>
                 </thead>
                 <tbody id="agents-table-tbody">
-                    <!-- Populated dynamically or using seeders. Fallback matching Figma -->
+                    <!-- Populated dynamically -->
                     <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user-tie" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap:1px;">
-                                    <span class="user-detail-name">Arjun Sharma</span>
-                                    <span class="user-detail-sub">arjun.s@emfinance.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#AGT-10293</td>
-                        <td>North Mumbai</td>
-                        <td class="font-semibold">₹45,200</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: 92%; background-color: var(--accent);"></div>
-                                </div>
-                                <span class="text-sm font-semibold">92%</span>
-                            </div>
-                        </td>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="openAgentManageModal(10293)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">Manage</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user-tie" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap:1px;">
-                                    <span class="user-detail-name">Priya Desai</span>
-                                    <span class="user-detail-sub">priya.d@emfinance.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#AGT-10314</td>
-                        <td>South Delhi</td>
-                        <td class="font-semibold">₹38,900</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: 78%; background-color: var(--accent);"></div>
-                                </div>
-                                <span class="text-sm font-semibold">78%</span>
-                            </div>
-                        </td>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="openAgentManageModal(10314)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">Manage</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="user-avatar-group">
-                                <div style="display:flex; width: 32px; height: 32px; align-items:center; justify-content:center; border-radius: 6px; background-color: var(--primary-light); color: var(--primary); flex-shrink: 0;">
-                                    <i class="fa-solid fa-user-tie" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div class="flex-column" style="gap:1px;">
-                                    <span class="user-detail-name">Karan Mehra</span>
-                                    <span class="user-detail-sub">karan.m@emfinance.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>#AGT-10255</td>
-                        <td>East Bangalore</td>
-                        <td class="font-semibold">₹12,000</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: 45%; background-color: var(--primary);"></div>
-                                </div>
-                                <span class="text-sm font-semibold">45%</span>
-                            </div>
-                        </td>
-                        <td><span class="badge badge-neutral">Offline</span></td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="openAgentManageModal(10255)" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">Manage</a>
+                        <td colspan="7" class="text-center" style="padding:30px 20px; color:var(--text-muted);">
+                            <i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem; margin-bottom:6px; display:block; opacity:0.5;"></i>
+                            Loading agents...
                         </td>
                     </tr>
                 </tbody>
@@ -219,16 +141,11 @@
         </div>
 
         <!-- Pagination -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
-            <span class="text-sm text-muted">Page 1 of 9</span>
+        <div id="agents-pagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
+            <span class="pagination-info text-sm text-muted">Page 1 of 1</span>
             <div style="display:flex; gap:6px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="btn-primary" style="padding: 6px 12px; font-size:0.8rem; background-color: var(--primary); border-radius: 6px;">1</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">2</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">3</button>
-                <span style="align-self:center; color: var(--text-muted); padding: 0 4px;">...</span>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;">9</button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;"><i class="fa-solid fa-chevron-right"></i></button>
+                <button class="btn-secondary pagination-prev" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="btn-secondary pagination-next" style="padding: 6px 12px; font-size:0.8rem; border-radius: 6px;" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
 

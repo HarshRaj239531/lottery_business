@@ -45,13 +45,21 @@
             `;
         } 
         else if (type === 'create-member') {
-            modalTitle.textContent = 'New User / Agent';
+            modalTitle.textContent = id === 'agent' ? 'New Agent' : (id === 'member' ? 'New Member' : 'New User / Agent');
             html = `
                 <form id="modal-form" onsubmit="submitForm(event, 'members')">
                     <div class="input-group"><label>Role</label>
                         <select id="m_role" class="input-field" style="width:100%; border:none; background:transparent;">
-                            <option value="member" selected>Member</option>
-                            <option value="agent">Agent</option>
+                            ${id === 'agent' 
+                                ? '<option value="agent" selected>Agent</option>' 
+                                : (id === 'member'
+                                    ? '<option value="member" selected>Member</option>'
+                                    : `
+                                        <option value="member" selected>Member</option>
+                                        <option value="agent">Agent</option>
+                                      `
+                                  )
+                            }
                         </select>
                     </div>
                     <div class="input-group"><label>Full Name</label><div class="input-field"><input type="text" id="m_name" required></div></div>

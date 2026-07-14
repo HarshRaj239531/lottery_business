@@ -3,9 +3,17 @@
         try {
             // Load Pending Collections
             const colRes = await fetch('/api/admin/agents/collections?status=pending', { headers: getHeaders() });
+            const colJson = await colRes.json();
             if(colRes.status === 401) { document.getElementById('logout-btn').click(); return; }
-            const colData = await colRes.json();
-            if (!Array.isArray(colData)) throw new Error("API did not return an array: " + JSON.stringify(colData).substring(0, 50));
+            
+            const colData = Array.isArray(colJson) 
+                ? colJson 
+                : (colJson.data && Array.isArray(colJson.data.data) 
+                    ? colJson.data.data 
+                    : (colJson.data && Array.isArray(colJson.data) 
+                        ? colJson.data 
+                        : []));
+
             const commBody = document.getElementById('agent-pending-committee-collections-tbody');
             const loanBody = document.getElementById('agent-pending-loan-collections-tbody');
             commBody.innerHTML = '';

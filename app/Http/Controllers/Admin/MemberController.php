@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Committee;
 use App\Models\Installment;
+use App\Models\AgentCollection;
+use App\Models\AgentTarget;
 use App\Http\Requests\MemberRequest;
 use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
 
 class MemberController extends Controller
 {
@@ -22,7 +25,8 @@ class MemberController extends Controller
     */
     public function index(Request $request)
     {
-        $query = User::role(['member', 'agent'])
+        $role = $request->input('role');
+        $query = User::role($role ? (is_array($role) ? $role : [$role]) : ['member', 'agent'])
             ->with(['roles', 'loans', 'committees'])
             ->withCount(['committees', 'loans'])
             ->withSum(['installments as total_investment' => function($q) {
@@ -78,8 +82,21 @@ class MemberController extends Controller
             return DataTables::of($query)->make(true);
         }
 
+        $paginated = $query->paginate(50);
+        
+        $paginated->through(function ($user) {
+            if ($user->hasRole('agent')) {
+                $todayCollectionCount = AgentCollection::where('agent_id', $user->id)
+                    ->whereDate('created_at', Carbon::today())
+                    ->where('status', 'approved')
+                    ->count();
+                $user->status = $todayCollectionCount > 0 ? 'Active' : 'Offline';
+            }
+            return $user;
+        });
+
         return ApiResponse::success(
-            $query->paginate(50),
+            $paginated,
             'Members fetched successfully'
         );
     }

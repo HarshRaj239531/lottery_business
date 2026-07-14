@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/search-member', [\App\Http\Controllers\Agent\MemberController::class, 'search']);
         Route::get('/clients', [\App\Http\Controllers\Agent\ClientController::class, 'index']);
         Route::get('/clients/{id}', [\App\Http\Controllers\Agent\ClientController::class, 'show']);
+        Route::post('/clients/kyc', [\App\Http\Controllers\Agent\ClientController::class, 'submitKyc']);
         
         // Collections
         Route::post('/collections/submit', [\App\Http\Controllers\Agent\CollectionController::class, 'submit']);

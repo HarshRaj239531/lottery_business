@@ -1,14 +1,16 @@
 <?php
-
+ 
 namespace App\Http\Controllers\Agent;
-
+ 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helpers\ApiResponse;
 use App\Models\Installment;
 use App\Models\LoanInstallment;
+use App\Models\AgentCollection;
+use App\Models\AgentTarget;
 use Carbon\Carbon;
-
+ 
 class DashboardController extends Controller
 {
     // 📊 Agent Dashboard Stats (Figma Synced)
@@ -17,23 +19,30 @@ class DashboardController extends Controller
         $agentId = $request->user()->id;
         $today = Carbon::today();
         $thisMonth = Carbon::now()->startOfMonth();
-
+ 
         // Today's Collection
-        $todayCollection = App\Models\AgentCollection::where('agent_id', $agentId)
+        $todayCollection = AgentCollection::where('agent_id', $agentId)
             ->whereDate('collected_at', $today)
             ->sum('amount_collected');
-
+ 
         // This Month's Collection
-        $thisMonthCollection = App\Models\AgentCollection::where('agent_id', $agentId)
+        $thisMonthCollection = AgentCollection::where('agent_id', $agentId)
             ->where('collected_at', '>=', $thisMonth)
             ->sum('amount_collected');
-
+ 
         // Total Collection (Lifetime)
-        $totalCollection = App\Models\AgentCollection::where('agent_id', $agentId)
+        $totalCollection = AgentCollection::where('agent_id', $agentId)
             ->sum('amount_collected');
-
+ 
+        // Target calculation
+        $target = AgentTarget::where('agent_id', $agentId)
+            ->where('status', 'active')
+            ->first();
+        $monthlyTarget = $target ? $target->target_value : 200000; // Default to 2.0L if no target
+        $targetProgress = $monthlyTarget > 0 ? min(100.0, round(($thisMonthCollection / $monthlyTarget) * 100, 1)) : 0.0;
+ 
         // Recent Activity (Mapped for UI)
-        $recentActivity = App\Models\AgentCollection::with(['member'])
+        $recentActivity = AgentCollection::with(['member'])
             ->where('agent_id', $agentId)
             ->orderBy('collected_at', 'desc')
             ->take(10)
@@ -48,11 +57,13 @@ class DashboardController extends Controller
                     'type' => $item->collection_type === 'committee' ? 'Committee Collection' : 'Loan EMI Collection'
                 ];
             });
-
+ 
         return ApiResponse::success([
             'today_collection' => $todayCollection,
             'this_month_collection' => $thisMonthCollection,
             'total_collection' => $totalCollection,
+            'monthly_target' => $monthlyTarget,
+            'target_progress' => $targetProgress,
             'recent_activity' => $recentActivity
         ], 'Agent dashboard data fetched');
     }

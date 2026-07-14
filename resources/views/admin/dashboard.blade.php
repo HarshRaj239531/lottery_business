@@ -203,30 +203,33 @@
             <ul class="nav-menu">
                 <li class="nav-title">Finance Core</li>
                 <li><a href="#dashboard" class="nav-link active" data-view="dashboard"><i class="fa-solid fa-gauge"></i> <span>Dashboard</span></a></li>
+                <li><a href="#collections" class="nav-link" data-view="collections"><i class="fa-solid fa-vault"></i> <span>Collection</span></a></li>
                 <li><a href="#members" class="nav-link" data-view="members"><i class="fa-solid fa-user-group"></i> <span>Members</span></a></li>
                 <li><a href="#agents" class="nav-link" data-view="agents"><i class="fa-solid fa-user-tie"></i> <span>Agents</span></a></li>
                 <li><a href="#kyc" class="nav-link" data-view="kyc"><i class="fa-solid fa-shield-heart"></i> <span>KYC</span></a></li>
                 <li><a href="#loans" class="nav-link" data-view="loans"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Loans</span></a></li>
-                <li><a href="#collections" class="nav-link" data-view="collections"><i class="fa-solid fa-vault"></i> <span>Collections</span></a></li>
-                <li><a href="#payments" class="nav-link" data-view="payments"><i class="fa-solid fa-money-bill-transfer"></i> <span>Payments</span></a></li>
+                <li><a href="#committees" class="nav-link" data-view="committees"><i class="fa-solid fa-users-rectangle"></i> <span>Committee</span></a></li>
+                <li><a href="#lotteries" class="nav-link" data-view="lotteries"><i class="fa-solid fa-trophy"></i> <span>Lotteries</span></a></li>
+                <li><a href="#installments" class="nav-link" data-view="installments"><i class="fa-solid fa-file-invoice-dollar"></i> <span>Installment</span></a></li>
                 <li><a href="#materials" class="nav-link" data-view="materials"><i class="fa-solid fa-boxes-stacked"></i> <span>Materials</span></a></li>
-                <li><a href="#terms" class="nav-link" data-view="terms"><i class="fa-solid fa-file-contract"></i> <span>Terms & Conditions</span></a></li>
-                <li><a href="#settings" class="nav-link" data-view="settings"><i class="fa-solid fa-sliders"></i> <span>Settings</span></a></li>
+                <li><a href="#terms" class="nav-link" data-view="terms"><i class="fa-solid fa-file-contract"></i> <span>Term and Condition</span></a></li>
+                <li><a href="#settings" class="nav-link" data-view="settings"><i class="fa-solid fa-sliders"></i> <span>Setting</span></a></li>
                 
+                <!-- Commented out items as per user request -->
+                <!--
+                <li><a href="#payments" class="nav-link" data-view="payments"><i class="fa-solid fa-money-bill-transfer"></i> <span>Payments</span></a></li>
                 <li class="nav-title" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="$('#accounting-submenu').slideToggle()">
                     <span>Accounting & Ops</span>
                     <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i>
                 </li>
                 <div id="accounting-submenu" style="display: none;">
-                    <li><a href="#committees" class="nav-link" data-view="committees"><i class="fa-solid fa-users-rectangle"></i> <span>Committees</span></a></li>
-                    <li><a href="#installments" class="nav-link" data-view="installments"><i class="fa-solid fa-file-invoice-dollar"></i> <span>Installments</span></a></li>
-                    <li><a href="#lotteries" class="nav-link" data-view="lotteries"><i class="fa-solid fa-trophy"></i> <span>Lotteries</span></a></li>
                     <li><a href="#payouts" class="nav-link" data-view="payouts"><i class="fa-solid fa-receipt"></i> <span>Payouts</span></a></li>
                     <li><a href="#pnl" class="nav-link" data-view="pnl"><i class="fa-solid fa-chart-line"></i> <span>Profit & Loss</span></a></li>
                     <li><a href="#balance-sheet" class="nav-link" data-view="balance-sheet"><i class="fa-solid fa-scale-balanced"></i> <span>Balance Sheet</span></a></li>
                     <li><a href="#member-ledger" class="nav-link" data-view="member-ledger"><i class="fa-solid fa-file-invoice"></i> <span>Member Ledger</span></a></li>
                     <li><a href="#committee-ledger" class="nav-link" data-view="committee-ledger"><i class="fa-solid fa-receipt"></i> <span>Comm Ledger</span></a></li>
                 </div>
+                -->
             </ul>
 
             <div class="sidebar-footer">

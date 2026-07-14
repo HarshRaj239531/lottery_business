@@ -7,6 +7,7 @@ use App\Models\Committee;
 use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\LoanInstallment;
+use App\Models\AgentCollection;
 use App\Models\Lottery;
 use Carbon\Carbon;
 
@@ -84,21 +85,85 @@ class DashboardService
             ]);
         }
 
-        // Weekly trends query
-        $weeklyTrends = Installment::selectRaw('DAYNAME(created_at) as day, SUM(amount)/100000 as total')
-            ->where('status', 'paid')
-            ->groupBy('day')
-            ->get();
-
-        if ($weeklyTrends->isEmpty()) {
-            $weeklyTrends = collect([
-                ['day' => 'Mon', 'total' => 24],
-                ['day' => 'Tue', 'total' => 38],
-                ['day' => 'Wed', 'total' => 30],
-                ['day' => 'Thu', 'total' => 48],
-                ['day' => 'Fri', 'total' => 56],
-                ['day' => 'Sat', 'total' => 42],
-                ['day' => 'Sun', 'total' => 60]
+        // ===== DYNAMIC COLLECTION METRICS =====
+        
+        // Today's collection from AgentCollection (approved + pending)
+        $todayCollectionApproved = (int) AgentCollection::whereDate('created_at', Carbon::today())
+            ->where('status', 'approved')->sum('amount_collected');
+        $todayCollectionAll = (int) AgentCollection::whereDate('created_at', Carbon::today())
+            ->sum('amount_collected');
+        // Fallback: if no AgentCollection data, use Installment
+        if ($todayCollectionAll == 0) {
+            $todayCollectionAll = (int) Installment::whereDate('created_at', Carbon::today())->sum('amount');
+            $todayCollectionApproved = (int) Installment::whereDate('created_at', Carbon::today())
+                ->where('status', 'paid')->sum('amount');
+        }
+        
+        // Yesterday's collection for comparison
+        $yesterdayCollection = (int) AgentCollection::whereDate('created_at', Carbon::yesterday())
+            ->sum('amount_collected');
+        if ($yesterdayCollection == 0) {
+            $yesterdayCollection = (int) Installment::whereDate('created_at', Carbon::yesterday())->sum('amount');
+        }
+        $yesterdayChangePercent = $yesterdayCollection > 0 
+            ? round((($todayCollectionAll - $yesterdayCollection) / $yesterdayCollection) * 100, 1) 
+            : 0;
+        
+        // Collection Success Rate (approved vs total)
+        $totalCollections = AgentCollection::count();
+        $approvedCollections = AgentCollection::where('status', 'approved')->count();
+        $collectionSuccessRate = $totalCollections > 0 
+            ? round(($approvedCollections / $totalCollections) * 100, 1) 
+            : 0;
+        
+        // Monthly Target Progress
+        $monthlyCollected = (int) AgentCollection::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->where('status', 'approved')
+            ->sum('amount_collected');
+        if ($monthlyCollected == 0) {
+            $monthlyCollected = (int) Installment::whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->where('status', 'paid')
+                ->sum('amount');
+        }
+        // Set a reasonable target (last month's total * 1.1, or use monthly collected as 100%)
+        $lastMonthCollected = (int) AgentCollection::whereMonth('created_at', Carbon::now()->subMonth()->month)
+            ->whereYear('created_at', Carbon::now()->subMonth()->year)
+            ->where('status', 'approved')
+            ->sum('amount_collected');
+        if ($lastMonthCollected == 0) {
+            $lastMonthCollected = (int) Installment::whereMonth('created_at', Carbon::now()->subMonth()->month)
+                ->whereYear('created_at', Carbon::now()->subMonth()->year)
+                ->where('status', 'paid')
+                ->sum('amount');
+        }
+        $monthlyTarget = $lastMonthCollected > 0 ? (int)($lastMonthCollected * 1.1) : max($monthlyCollected, 1);
+        $monthlyTargetProgress = $monthlyTarget > 0 ? min(round(($monthlyCollected / $monthlyTarget) * 100), 100) : 0;
+        
+        // Collection Methods (digital vs cash) from AgentCollection details
+        $totalMethodCount = AgentCollection::count();
+        $cashCount = AgentCollection::where('details', 'like', '%cash%')->count();
+        $digitalCount = $totalMethodCount - $cashCount;
+        $digitalPercent = $totalMethodCount > 0 ? round(($digitalCount / $totalMethodCount) * 100) : 50;
+        $cashPercent = 100 - $digitalPercent;
+        
+        // Weekly trends from real data (last 7 days)
+        $weeklyTrends = collect();
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $dayTotal = AgentCollection::whereDate('created_at', $date)
+                ->where('status', 'approved')
+                ->sum('amount_collected');
+            if ($dayTotal == 0) {
+                $dayTotal = Installment::whereDate('created_at', $date)
+                    ->where('status', 'paid')
+                    ->sum('amount');
+            }
+            $weeklyTrends->push([
+                'day' => $date->format('D'),
+                'date' => $date->format('d M'),
+                'total' => round($dayTotal / 100000, 2) // in Lakhs
             ]);
         }
 
@@ -107,17 +172,25 @@ class DashboardService
             'paid_members_count' => User::role('member')->whereHas('installments')->whereDoesntHave('installments', function ($query) {
                 $query->where('status', 'pending')->where('due_date', '<=', Carbon::today());
             })->count(),
-            'today_collection' => (int) Installment::whereDate('created_at', Carbon::today())->sum('amount'),
+            'today_collection' => $todayCollectionAll,
+            'today_collection_formatted' => $this->formatAmountToCrOrLakh($todayCollectionAll),
+            'yesterday_change_percent' => $yesterdayChangePercent,
+            'monthly_target_progress' => (int) $monthlyTargetProgress,
+            'monthly_collected' => $monthlyCollected,
+            'monthly_target' => $monthlyTarget,
             'total_outstanding' => (int) Installment::where('status', 'pending')->sum('amount'),
             'total_due_amount' => (int) Installment::where('status', 'pending')->where('due_date', '<=', Carbon::today())->sum('amount'),
             
             // Figma stats
             'total_disbursements_formatted' => $totalDisbursedFormatted,
-            'active_members_count' => $totalMembers ?: 12482,
-            'active_agents_count' => $totalAgents ?: 62,
+            'active_members_count' => $totalMembers,
+            'active_agents_count' => $totalAgents,
             'total_collections_formatted' => $totalCollectionsFormatted,
             'kyc_compliance_rate' => $kycRate,
-            'collection_success_rate' => 94.5,
+            'collection_success_rate' => $collectionSuccessRate,
+            'total_collections_count' => $totalCollections,
+            'approved_collections_count' => $approvedCollections,
+            'pending_collections_count' => AgentCollection::where('status', 'pending')->count(),
             
             // Lists & Charts
             'recent_transactions' => $recentTx,
@@ -129,8 +202,8 @@ class DashboardService
                 'unmapped' => 10
             ],
             'collection_methods' => [
-                'digital' => 70,
-                'cash' => 30
+                'digital' => $digitalPercent,
+                'cash' => $cashPercent
             ]
         ];
     }

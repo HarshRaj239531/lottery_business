@@ -21,6 +21,7 @@ class UserAuthController extends Controller
 
         $user = User::where('email', $request->login_id)
             ->orWhere('phone', $request->login_id)
+            ->with('roles')
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {

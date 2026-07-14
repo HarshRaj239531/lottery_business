@@ -34,7 +34,8 @@
                 page: currentPage,
                 search: searchVal,
                 community: communityVal,
-                status: statusVal
+                status: statusVal,
+                role: 'member'
             });
 
             const res = await fetch(`/api/admin/members?${queryParams.toString()}`, { headers: getHeaders() });
@@ -137,21 +138,21 @@
     async function loadMemberMetrics() {
         try {
             // Get total count
-            const totalRes = await fetch('/api/admin/members', { headers: getHeaders() });
+            const totalRes = await fetch('/api/admin/members?role=member', { headers: getHeaders() });
             const totalJson = await totalRes.json();
             const totalCount = totalJson.data.total || 0;
             const totalMetric = document.getElementById('members-metric-total');
             if (totalMetric) totalMetric.textContent = totalCount.toLocaleString();
 
             // Get active count
-            const activeRes = await fetch('/api/admin/members?status=active', { headers: getHeaders() });
+            const activeRes = await fetch('/api/admin/members?status=active&role=member', { headers: getHeaders() });
             const activeJson = await activeRes.json();
             const activeCount = activeJson.data.total || 0;
             const activeMetric = document.getElementById('members-metric-active');
             if (activeMetric) activeMetric.textContent = activeCount.toLocaleString();
 
             // Get pending count
-            const pendingRes = await fetch('/api/admin/members?status=pending', { headers: getHeaders() });
+            const pendingRes = await fetch('/api/admin/members?status=pending&role=member', { headers: getHeaders() });
             const pendingJson = await pendingRes.json();
             const pendingCount = pendingJson.data.total || 0;
             const pendingMetric = document.getElementById('members-metric-pending');

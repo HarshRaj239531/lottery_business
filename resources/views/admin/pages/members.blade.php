@@ -10,7 +10,7 @@
             <h2 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; margin: 0;">Tenant Members</h2>
             <div class="header-btns" style="display: flex; gap: 12px;">
                 <button class="btn-secondary" onclick="alert('Exporting CSV...')">Export CSV</button>
-                <button class="btn-primary" onclick="openModal('create-member')"><i class="fa-solid fa-user-plus"></i> Add New Member</button>
+                <button class="btn-primary" onclick="openModal('create-member', 'member')"><i class="fa-solid fa-user-plus"></i> Add New Member</button>
             </div>
         </div>
         <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 6px;">Monitor and manage your global community membership database.</p>

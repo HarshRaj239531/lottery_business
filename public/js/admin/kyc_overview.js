@@ -1,4 +1,4 @@
-
+document.addEventListener('DOMContentLoaded', () => {
     // ----- NEW FIGMA VIEWS BINDINGS & LOADERS -----
     let collectionsTrendChartInstance = null;
     let collectionsMethodsChartInstance = null;
@@ -105,71 +105,165 @@
     // Load Collections Overview data & charts
     async function loadCollectionsOverviewData() {
         try {
-            // Fetch stats
+            // Fetch stats from dashboard API
             const res = await fetch('/api/admin/dashboard', { headers: getHeaders() });
             const payload = await res.json();
             const stats = payload.data;
 
-            // Load Metrics
+            // ===== METRIC CARD 1: Total Collected Today =====
             const todayColl = document.getElementById('coll-metric-collected');
-            if (todayColl) todayColl.textContent = '₹' + (stats.today_collection_formatted || '1.2Cr');
+            if (todayColl) {
+                const formatted = stats.today_collection_formatted || '₹0';
+                todayColl.textContent = formatted.startsWith('₹') ? formatted : '₹' + formatted;
+            }
+            // Yesterday comparison
+            const yesterdayEl = document.getElementById('coll-yesterday-change');
+            if (yesterdayEl) {
+                const pct = stats.yesterday_change_percent || 0;
+                const icon = yesterdayEl.querySelector('i');
+                const text = yesterdayEl.querySelector('span') || yesterdayEl;
+                if (pct >= 0) {
+                    if (icon) { icon.className = 'fa-solid fa-arrow-trend-up'; icon.style.color = 'var(--success)'; }
+                    text.textContent = '+' + pct + '% vs yesterday';
+                } else {
+                    if (icon) { icon.className = 'fa-solid fa-arrow-trend-down'; icon.style.color = 'var(--danger, #ef4444)'; }
+                    text.textContent = pct + '% vs yesterday';
+                }
+            }
+
+            // ===== METRIC CARD 2: Active Agents =====
             const actAgents = document.getElementById('coll-metric-agents');
-            if (actAgents) actAgents.textContent = stats.active_agents_count || 62;
+            if (actAgents) actAgents.textContent = stats.active_agents_count || 0;
+
+            // ===== METRIC CARD 3: Collection Success Rate =====
             const successRate = document.getElementById('coll-metric-success');
-            if (successRate) successRate.textContent = (stats.collection_success_rate || 94.5) + '%';
+            if (successRate) {
+                const rate = stats.collection_success_rate || 0;
+                successRate.textContent = rate + '%';
+                // Update badge
+                const successBadge = document.getElementById('coll-success-badge');
+                if (successBadge) {
+                    if (rate >= 80) {
+                        successBadge.textContent = 'High';
+                        successBadge.className = 'badge badge-success';
+                    } else if (rate >= 50) {
+                        successBadge.textContent = 'Medium';
+                        successBadge.className = 'badge badge-pending';
+                    } else {
+                        successBadge.textContent = 'Low';
+                        successBadge.className = 'badge badge-failed';
+                    }
+                    successBadge.style.cssText = 'padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;';
+                }
+            }
             
-            // Populate recent collections table
+            // ===== METRIC CARD 4: Monthly Target Progress =====
+            const targetProg = document.getElementById('coll-metric-progress');
+            if (targetProg) {
+                const progValue = stats.monthly_target_progress || 0;
+                targetProg.textContent = progValue + '%';
+                // Find progress bar within the card
+                const card = targetProg.closest('.stat-card');
+                if (card) {
+                    const progBar = card.querySelector('.progress-bar-fill');
+                    if (progBar) progBar.style.width = progValue + '%';
+                }
+            }
+            
+            // ===== RECENT COLLECTIONS TABLE =====
             const collRes = await fetch('/api/admin/agents/collections', { headers: getHeaders() });
-            const colData = await collRes.json();
+            const rawColData = await collRes.json();
+            const colData = Array.isArray(rawColData.data?.data) 
+                ? rawColData.data.data 
+                : (Array.isArray(rawColData.data) ? rawColData.data : (Array.isArray(rawColData) ? rawColData : []));
+            const totalCount = rawColData.data?.total || colData.length;
+            
             const collTbody = document.getElementById('collections-table-tbody');
-            if (collTbody && Array.isArray(colData)) {
+            if (collTbody) {
                 collTbody.innerHTML = '';
-                const displayData = colData.slice(0, 10);
-                document.getElementById('collections-table-count').textContent = `Showing ${displayData.length} of ${colData.length} collections total`;
+                const countElem = document.getElementById('collections-table-count');
                 
-                if (displayData.length > 0) {
-                    displayData.forEach(c => {
-                        const agentName = c.agent ? c.agent.name : 'Agent';
-                        const memberName = c.member ? c.member.name : 'Member';
-                        const method = c.details || 'UPI';
-                        const time = new Date(c.collected_at || c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                if (colData.length > 0) {
+                    if (countElem) countElem.textContent = `Showing ${colData.length} of ${totalCount} collections total`;
+                    
+                    colData.forEach(c => {
+                        const agentName = c.agent ? c.agent.name : 'Unknown Agent';
+                        const memberName = c.member ? c.member.name : 'Unknown Member';
+                        const method = c.details || c.collection_type || 'N/A';
+                        const amount = Number(c.amount_collected || 0).toLocaleString('en-IN');
+                        const dateStr = c.collected_at || c.created_at;
+                        const time = dateStr ? new Date(dateStr).toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit', hour12: true}) : '--';
+                        const dateFormatted = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', {day: '2-digit', month: 'short'}) : '';
                         
-                        let actionHtml = `<span class="badge badge-success">Success</span>`;
-                        if (c.status === 'pending') {
+                        // Status / action column
+                        let actionHtml = '';
+                        if (c.status === 'approved') {
+                            actionHtml = `<span class="badge badge-success" style="padding:3px 8px; font-size:0.7rem;">Approved</span>`;
+                        } else if (c.status === 'pending') {
                             actionHtml = `
                                 <div style="display:flex; gap:6px;">
-                                    <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem; background-color: var(--accent);" onclick="approveCollectionFromOverview(${c.id})">Approve</button>
-                                    <button class="btn-secondary text-danger" style="padding:4px 8px; font-size:0.75rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2);" onclick="rejectCollectionFromOverview(${c.id})">Reject</button>
+                                    <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background-color: var(--accent); border-radius:5px;" onclick="approveCollectionFromOverview(${c.id})">Approve</button>
+                                    <button class="btn-secondary text-danger" style="padding:4px 10px; font-size:0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15); border-radius:5px;" onclick="rejectCollectionFromOverview(${c.id})">Reject</button>
                                 </div>
                             `;
                         } else if (c.status === 'rejected') {
-                            actionHtml = `<span class="badge badge-failed">Rejected</span>`;
+                            actionHtml = `<span class="badge badge-failed" style="padding:3px 8px; font-size:0.7rem;">Rejected</span>`;
+                        }
+
+                        // Method badge color
+                        let methodBadge = 'badge-neutral';
+                        const methodLower = method.toLowerCase();
+                        if (methodLower.includes('upi') || methodLower.includes('digital') || methodLower.includes('wallet')) {
+                            methodBadge = 'badge-success';
+                        } else if (methodLower.includes('cash')) {
+                            methodBadge = 'badge-pending';
                         }
 
                         collTbody.innerHTML += `
                             <tr>
                                 <td>
                                     <div class="user-avatar-group">
-                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(agentName)}&background=004d40&color=fff" alt="Avatar">
+                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(agentName)}&background=004d40&color=fff&size=32&rounded=true&bold=true" alt="Avatar" style="width:32px;height:32px;border-radius:50%;">
                                         <span class="user-detail-name">${agentName}</span>
                                     </div>
                                 </td>
                                 <td>${memberName}</td>
-                                <td class="font-semibold">₹${c.amount_collected}</td>
-                                <td><span class="badge badge-neutral">${method}</span></td>
-                                <td>${time}</td>
+                                <td class="font-semibold">₹${amount}</td>
+                                <td><span class="badge ${methodBadge}" style="text-transform:capitalize;">${method}</span></td>
+                                <td><span style="font-size:0.8rem;">${dateFormatted}</span> <span style="font-size:0.7rem;color:var(--text-muted);">${time}</span></td>
                                 <td>${actionHtml}</td>
                             </tr>
                         `;
                     });
                 } else {
-                    collTbody.innerHTML = '<tr><td colspan="6" class="text-center">No recent collection records found.</td></tr>';
+                    if (countElem) countElem.textContent = 'No collections found';
+                    collTbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+                                <i class="fa-solid fa-inbox" style="font-size:2rem; margin-bottom:8px; display:block; opacity:0.4;"></i>
+                                No collection records found yet. Collections will appear here once agents start collecting.
+                            </td>
+                        </tr>`;
                 }
             }
 
+            // ===== PAGINATION =====
+            const paginationContainer = document.getElementById('collections-pagination');
+            if (paginationContainer && rawColData.data) {
+                const currentPage = rawColData.data.current_page || 1;
+                const lastPage = rawColData.data.last_page || 1;
+                const prevBtn = paginationContainer.querySelector('.pagination-prev');
+                const nextBtn = paginationContainer.querySelector('.pagination-next');
+                const pageInfo = paginationContainer.querySelector('.pagination-info');
+                if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${lastPage}`;
+                if (prevBtn) prevBtn.disabled = currentPage <= 1;
+                if (nextBtn) nextBtn.disabled = currentPage >= lastPage;
+            }
+
+            // ===== RENDER CHARTS =====
             renderCollectionsCharts(stats.weekly_trends, stats.collection_methods);
         } catch (e) {
-            console.error(e);
+            console.error('Collections Overview Error:', e);
         }
     }
 
@@ -177,12 +271,12 @@
     function renderCollectionsCharts(weeklyTrends = null, methods = null) {
         const ctxTrend = document.getElementById('collectionsTrendChart');
         if (ctxTrend) {
-            let labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            let dataVals = [24, 38, 30, 48, 56, 42, 60]; // in Lakhs
+            let labels = [];
+            let dataVals = [];
             
             if (weeklyTrends && Array.isArray(weeklyTrends) && weeklyTrends.length > 0) {
-                labels = weeklyTrends.map(t => t.day);
-                dataVals = weeklyTrends.map(t => t.total);
+                labels = weeklyTrends.map(t => t.date ? (t.day + '\n' + t.date) : t.day);
+                dataVals = weeklyTrends.map(t => parseFloat(t.total) || 0);
             }
 
             const isDarkTheme = document.body.classList.contains('dark-theme');
@@ -243,10 +337,21 @@
 
         const ctxMethod = document.getElementById('collectionsMethodsChart');
         if (ctxMethod) {
-            let doughnutData = [70, 30]; // 70% UPI/Wallet, 30% Cash
+            let digitalPct = 50, cashPct = 50;
             if (methods) {
-                doughnutData = [methods.digital || 70, methods.cash || 30];
+                digitalPct = methods.digital || 0;
+                cashPct = methods.cash || 0;
             }
+
+            // Update center label dynamically
+            const centerLabel = document.getElementById('coll-methods-center-pct');
+            if (centerLabel) centerLabel.textContent = digitalPct + '%';
+            
+            // Update legend values dynamically
+            const legendDigital = document.getElementById('coll-methods-digital-pct');
+            if (legendDigital) legendDigital.textContent = digitalPct + '%';
+            const legendCash = document.getElementById('coll-methods-cash-pct');
+            if (legendCash) legendCash.textContent = cashPct + '%';
 
             if (collectionsMethodsChartInstance) collectionsMethodsChartInstance.destroy();
             collectionsMethodsChartInstance = new Chart(ctxMethod.getContext('2d'), {
@@ -254,7 +359,7 @@
                 data: {
                     labels: ['UPI & Wallet', 'Cash'],
                     datasets: [{
-                        data: doughnutData,
+                        data: [digitalPct, cashPct],
                         backgroundColor: ['#004d40', '#0ea5e9'],
                         borderWidth: 0,
                         hoverOffset: 4
@@ -278,7 +383,7 @@
     // Load agents database list
     async function loadAgentsList() {
         try {
-            const res = await fetch('/api/admin/members', { headers: getHeaders() });
+            const res = await fetch('/api/admin/members?role=agent', { headers: getHeaders() });
             const data = await res.json();
             const tbody = document.getElementById('agents-table-tbody');
             if (!tbody) return;
@@ -291,7 +396,56 @@
                     : (Array.isArray(data)
                         ? data
                         : []));
-            const agents = membersList.filter(m => m.roles && m.roles.some(r => r.name === 'agent'));
+            const agents = membersList;
+
+            // Calculate metrics dynamically
+            let totalCollections = 0;
+            let activeAgentsCount = 0;
+            let totalTargetProgress = 0;
+            
+            agents.forEach(a => {
+                const sumString = a.today_collection ? a.today_collection.replace(/[₹,]/g, '') : '0';
+                const todaySum = parseFloat(sumString) || 0;
+                if (todaySum > 0) {
+                    activeAgentsCount++;
+                }
+                totalCollections += todaySum;
+                totalTargetProgress += parseFloat(a.target_progress) || 0;
+            });
+
+            if (document.getElementById('agent-metric-total')) {
+                document.getElementById('agent-metric-total').textContent = agents.length;
+            }
+            if (document.getElementById('agent-metric-active')) {
+                document.getElementById('agent-metric-active').textContent = activeAgentsCount;
+            }
+            if (document.getElementById('agent-metric-collections')) {
+                document.getElementById('agent-metric-collections').textContent = '₹' + totalCollections.toLocaleString('en-IN');
+            }
+
+            const avgProgress = agents.length > 0 ? Math.round(totalTargetProgress / agents.length) : 0;
+            const perfElem = document.getElementById('agent-metric-performance');
+            if (perfElem) {
+                perfElem.textContent = avgProgress + '%';
+            }
+            const perfStatusElem = document.getElementById('agent-performance-status');
+            if (perfStatusElem) {
+                if (avgProgress >= 80) {
+                    perfStatusElem.innerHTML = '<i class="fa-solid fa-star"></i> Outstanding';
+                    perfStatusElem.style.color = 'var(--warning)';
+                } else if (avgProgress >= 50) {
+                    perfStatusElem.innerHTML = '<i class="fa-solid fa-star"></i> Good';
+                    perfStatusElem.style.color = 'var(--primary)';
+                } else {
+                    perfStatusElem.innerHTML = '<i class="fa-solid fa-star"></i> Average';
+                    perfStatusElem.style.color = 'var(--text-muted)';
+                }
+            }
+
+            const countElem = document.getElementById('agents-filter-count');
+            if (countElem) {
+                countElem.textContent = `Showing ${agents.length} of ${agents.length} agents`;
+            }
 
             if (agents.length > 0) {
                 agents.forEach(a => {
@@ -306,10 +460,10 @@
                         <tr>
                             <td>
                                 <div class="user-avatar-group">
-                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=004d40&color=fff" alt="Avatar">
+                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=004d40&color=fff&size=32&rounded=true&bold=true" alt="Avatar" style="width:32px;height:32px;border-radius:50%;">
                                     <div class="flex-column">
                                         <span class="user-detail-name">${a.name}</span>
-                                        <span class="user-detail-sub">${a.email}</span>
+                                        <span class="user-detail-sub">${a.email || '--'}</span>
                                     </div>
                                 </div>
                             </td>
@@ -334,6 +488,19 @@
             } else {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">No agents registered in system.</td></tr>';
             }
+
+            // Pagination setup
+            const paginationContainer = document.getElementById('agents-pagination');
+            if (paginationContainer && data.data) {
+                const currentPage = data.data.current_page || 1;
+                const lastPage = data.data.last_page || 1;
+                const prevBtn = paginationContainer.querySelector('.pagination-prev');
+                const nextBtn = paginationContainer.querySelector('.pagination-next');
+                const pageInfo = paginationContainer.querySelector('.pagination-info');
+                if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${lastPage}`;
+                if (prevBtn) prevBtn.disabled = currentPage <= 1;
+                if (nextBtn) nextBtn.disabled = currentPage >= lastPage;
+            }
         } catch (e) {
             console.error(e);
         }
@@ -341,28 +508,48 @@
 
     // Approve & Reject from overview
     window.approveCollectionFromOverview = async function(id) {
-        await window.approveCollection(id);
-        loadCollectionsOverviewData();
+        if (!confirm('Are you sure you want to approve this collection?')) return;
+        try {
+            const res = await fetch(`/api/admin/agents/collections/${id}/approve`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            if (data.status) {
+                alert('Collection approved successfully!');
+                loadCollectionsOverviewData();
+            } else {
+                alert(data.message || 'Approval failed');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('An error occurred');
+        }
     };
 
     window.rejectCollectionFromOverview = async function(id) {
-        if(!confirm("Are you sure you want to reject this collection voucher?")) return;
+        if (!confirm('Are you sure you want to reject this collection?')) return;
         try {
             const res = await fetch(`/api/admin/agents/collections/${id}/reject`, {
                 method: 'POST',
                 headers: getHeaders()
             });
             const data = await res.json();
-            alert(data.message || 'Collection voucher rejected.');
-            loadCollectionsOverviewData();
+            if (data.status) {
+                alert('Collection rejected successfully!');
+                loadCollectionsOverviewData();
+            } else {
+                alert(data.message || 'Rejection failed');
+            }
         } catch (e) {
-            alert('Failed: ' + e.message);
+            console.error(e);
+            alert('An error occurred');
         }
     };
 
     // Override loadPayoutsData to support both layouts
-    const originalLoadPayoutsData = loadPayoutsData;
-    loadPayoutsData = async function() {
+    const originalLoadPayoutsData = window.loadPayoutsData || function(){};
+    window.loadPayoutsData = async function() {
         try {
             await originalLoadPayoutsData();
             // Duplicate to payments-payouts-tbody if exists
@@ -408,3 +595,7 @@
         }
     };
 
+    window.loadKycData = loadKycData;
+    window.loadCollectionsOverviewData = loadCollectionsOverviewData;
+    window.loadAgentsList = loadAgentsList;
+});

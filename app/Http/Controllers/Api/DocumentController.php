@@ -17,8 +17,8 @@ class DocumentController extends Controller
         $user = $request->user();
 
         // 🛡️ Authorization Check
-        // Only the owner of the document or a Super Admin can view it
-        if ($user->id != $userId && !$user->hasRole('Super Admin')) {
+        // Only the owner of the document, Super Admin, or an agent can view it
+        if ($user->id != $userId && !$user->hasRole('Super Admin') && !$user->hasRole('agent')) {
             return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
