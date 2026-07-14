@@ -25,16 +25,16 @@
 
         <div class="hero-stats-group">
             <div class="hero-stat-box">
-                <div class="hero-stat-box-num">8</div>
+                <div class="hero-stat-box-num">--</div>
                 <div class="hero-stat-box-lbl">Modules</div>
             </div>
             <div class="hero-stat-box">
-                <div class="hero-stat-box-num">32</div>
+                <div class="hero-stat-box-num">--</div>
                 <div class="hero-stat-box-lbl">Controls</div>
             </div>
             <div class="hero-stat-box" style="background-color: var(--success-bg); border-color: rgba(16,185,129,0.2);">
                 <div class="hero-stat-box-num" style="color: var(--success); display:flex; align-items:center; justify-content:center; gap:3px;">
-                    <i class="fa-solid fa-bolt" style="font-size:0.85rem;"></i> +12%
+                    <i class="fa-solid fa-bolt" style="font-size:0.85rem;"></i> --
                 </div>
                 <div class="hero-stat-box-lbl" style="color: #065f46;">Collections</div>
             </div>
@@ -51,7 +51,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="dash-disbursements" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">₹4.5Cr</h2>
+                    <h2 id="dash-disbursements" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Total Disbursement</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <i class="fa-solid fa-arrow-trend-up" style="color: var(--success); font-size: 0.7rem;"></i>
@@ -71,7 +71,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="dash-active-members" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">12,482</h2>
+                    <h2 id="dash-active-members" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Active Members</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <span class="badge" style="background-color: #f3e8ff; color: #7c3aed; padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;">Stable</span>
@@ -90,7 +90,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="dash-total-collections" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">₹1.2Cr</h2>
+                    <h2 id="dash-total-collections" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Total Collections</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <span class="badge" style="background-color: #eff6ff; color: #2563eb; padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;">Monthly</span>
@@ -109,7 +109,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="dash-kyc-compliance" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">94%</h2>
+                    <h2 id="dash-kyc-compliance" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">KYC Compliance</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <span class="badge badge-success" style="padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;">Good</span>

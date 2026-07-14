@@ -23,7 +23,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="agent-metric-total" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">84</h2>
+                    <h2 id="agent-metric-total" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Total Agents</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <span class="badge badge-neutral" style="padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;">Staff</span>
@@ -41,7 +41,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="agent-metric-active" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">62</h2>
+                    <h2 id="agent-metric-active" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Active Today</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <span class="badge badge-success" style="padding: 1px 6px; font-size: 0.6rem; border-radius: 4px; font-weight: 700;">Live Now</span>
@@ -59,7 +59,7 @@
             <div class="shape-circle-3"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; z-index: 1;">
                 <div class="flex-column" style="gap: 2px; flex: 1; min-width: 0;">
-                    <h2 id="agent-metric-collections" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">₹1.2Cr</h2>
+                    <h2 id="agent-metric-collections" style="font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1.1;">--</h2>
                     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Monthly Collections</span>
                     <div style="display:flex; align-items:center; gap:4px; margin-top: 4px;">
                         <i class="fa-solid fa-arrow-trend-up" style="color: var(--success); font-size: 0.7rem;"></i>
